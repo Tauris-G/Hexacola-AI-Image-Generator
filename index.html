@@ -56,6 +56,7 @@
       flex-direction: column;
       margin-bottom: 25px;
       text-align: left;
+      position: relative;
     }
     .input-group label {
       margin-bottom: 8px;
@@ -79,6 +80,40 @@
       background-color: #1e1e1e;
       border-color: #00b3a4;
       color: #e0e0e0;
+    }
+    /* Stilizacijos naujajai personažo aprašymo funkcijai */
+    .input-group button#addCharacterBtn {
+      margin-top: 10px;
+      padding: 5px 10px;
+      font-size: 1.2em;
+      background-color: #00ffcc;
+      color: #000;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      width: 40px;
+      height: 40px;
+      position: absolute;
+      right: 0;
+      top: 0;
+    }
+    .input-group button#addCharacterBtn:hover {
+      background-color: #00e6b3;
+    }
+    .additional-character-group button {
+      margin-top: 10px;
+      padding: 5px 10px;
+      font-size: 1em;
+      background-color: #ff4d4d;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .additional-character-group button:hover {
+      background-color: #e60000;
     }
     .options {
       display: flex;
@@ -374,7 +409,9 @@
     <div class="input-group">
       <label for="characterPrompt">Character Description:</label>
       <textarea id="characterPrompt" placeholder="Pvz., Jaunas riteris su sidabru kruopelė..."></textarea>
+      <button type="button" id="addCharacterBtn" onclick="addCharacterDescription()" title="Pridėti papildomą personažo aprašymą">+</button>
     </div>
+    <div id="additionalCharacterDescriptions"></div>
     <div class="input-group">
       <label for="negativePrompt">Negative Prompt:</label>
       <textarea id="negativePrompt" placeholder="Pvz., nenoriu logotipo, iškraipyto stiliaus..."></textarea>
@@ -469,6 +506,16 @@
       const imageOptions = document.getElementById('imageOptions').value;
       const style = document.getElementById('style').value;
 
+      // Collect additional character descriptions
+      const additionalCharacterDescriptions = [];
+      const additionalGroups = document.querySelectorAll('.additional-character-group textarea');
+      additionalGroups.forEach(textarea => {
+        const desc = textarea.value.trim();
+        if (desc) {
+          additionalCharacterDescriptions.push(desc);
+        }
+      });
+
       localStorage.setItem('backgroundPrompt', backgroundPrompt);
       localStorage.setItem('characterPrompt', characterPrompt);
       localStorage.setItem('negativePrompt', negativePrompt);
@@ -479,6 +526,7 @@
       localStorage.setItem('imageOptions', imageOptions);
       localStorage.setItem('style', style);
       localStorage.setItem('autoMode', autoMode);
+      localStorage.setItem('additionalCharacterDescriptions', JSON.stringify(additionalCharacterDescriptions));
     }
 
     // Įkelti nustatymus iš vietinės saugyklos
@@ -493,6 +541,7 @@
       const imageOptions = localStorage.getItem('imageOptions');
       const style = localStorage.getItem('style');
       const savedAutoMode = localStorage.getItem('autoMode');
+      const additionalCharacterDescriptions = JSON.parse(localStorage.getItem('additionalCharacterDescriptions') || '[]');
 
       if (backgroundPrompt) document.getElementById('backgroundPrompt').value = backgroundPrompt;
       if (characterPrompt) document.getElementById('characterPrompt').value = characterPrompt;
@@ -512,6 +561,11 @@
         document.getElementById('autoToggleBtn').classList.remove('active');
         document.getElementById('autoToggleBtn').innerHTML = '<i class="fas fa-robot"></i> AUTO OFF';
       }
+
+      // Load additional character descriptions
+      additionalCharacterDescriptions.forEach(desc => {
+        addCharacterDescription(desc);
+      });
     }
 
     // Pradinis įkėlimas
@@ -618,6 +672,44 @@
       });
     }
 
+    // Function to add an additional character description
+    function addCharacterDescription(description = '') {
+      const container = document.getElementById('additionalCharacterDescriptions');
+      
+      const descriptionCount = container.children.length;
+      if (descriptionCount >= 5) { // Limit to, say, 5 additional descriptions
+        alert('Galite pridėti iki 5 papildomų personažo aprašymų.');
+        return;
+      }
+
+      const newGroup = document.createElement('div');
+      newGroup.classList.add('input-group', 'additional-character-group');
+
+      const label = document.createElement('label');
+      label.textContent = `Additional Character Description ${descriptionCount + 1}:`;
+      label.setAttribute('for', `additionalCharacterPrompt${descriptionCount + 1}`);
+
+      const textarea = document.createElement('textarea');
+      textarea.id = `additionalCharacterPrompt${descriptionCount + 1}`;
+      textarea.placeholder = 'Pvz., ilgasis šaknys, puikiai sutvarkyta šviesa...';
+      textarea.value = description;
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.textContent = '–'; // Remove button
+      removeBtn.title = 'Pašalinti šį aprašymą';
+      removeBtn.onclick = () => {
+        container.removeChild(newGroup);
+        saveSettings(); // Save changes
+      };
+
+      newGroup.appendChild(label);
+      newGroup.appendChild(textarea);
+      newGroup.appendChild(removeBtn);
+
+      container.appendChild(newGroup);
+    }
+
     // Generuoti vaizdą
     async function generateImage() {
       const generateButton = document.querySelector('.generate');
@@ -632,6 +724,16 @@
       const seed = document.getElementById('seed').value;
       const imageOptions = parseInt(document.getElementById('imageOptions').value);
       const style = document.getElementById('style').value;
+
+      // Collect additional character descriptions
+      const additionalCharacterDescriptions = [];
+      const additionalGroups = document.querySelectorAll('.additional-character-group textarea');
+      additionalGroups.forEach(textarea => {
+        const desc = textarea.value.trim();
+        if (desc) {
+          additionalCharacterDescriptions.push(desc);
+        }
+      });
 
       if (!backgroundPrompt || !characterPrompt) {
         alert('Prašome įvesti tiek fono, tiek personažo aprašymus.');
@@ -681,7 +783,7 @@
                 { role: 'system', content: 'You are a helpful assistant that optimizes image generation prompts for high quality.' },
                 { role: 'user', content: `Optimize the following character prompt for high-quality image generation: "${characterPrompt}"` }
               ],
-              model: 'gpt-4',
+              model: 'gpt-4', // Patikrinkite, ar tai teisingas modelis jūsų API
               seed: Math.floor(Math.random() * 100000),
               jsonMode: false
             }),
@@ -705,7 +807,7 @@
                   { role: 'system', content: 'You are a helpful assistant that optimizes negative prompts for image generation.' },
                   { role: 'user', content: `Optimize the following negative prompt to exclude unwanted elements: "${rawNegativePrompt}"` }
                 ],
-                model: 'gpt-4',
+                model: 'gpt-4', // Patikrinkite, ar tai teisingas modelis jūsų API
                 seed: Math.floor(Math.random() * 100000),
                 jsonMode: false
               }),
@@ -725,8 +827,16 @@
         }
       }
 
-      // Pridėti stiliaus aprašymą į promptą, jei pasirinktas stilius
-      let combinedPrompt = `${optimizedBackgroundPrompt}, ${optimizedCharacterPrompt}`;
+      // Integrate additional character descriptions
+      let fullCharacterPrompt = optimizedCharacterPrompt;
+      if (additionalCharacterDescriptions.length > 0) {
+        fullCharacterPrompt += ' ' + additionalCharacterDescriptions.join(' ');
+        // Add instructions to maintain style consistency
+        fullCharacterPrompt += ' Ensure that all characters maintain the same style, face structure, and clothing as described above.';
+      }
+
+      // Add high-quality image descriptions
+      let combinedPrompt = `${optimizedBackgroundPrompt}, ${fullCharacterPrompt}, with correct proportions, good perspective, and excellent composition.`;
       if (style === 'Mix') {
         combinedPrompt = appendMixStyleToPrompt(combinedPrompt);
       } else if (style !== 'None') {
@@ -794,7 +904,7 @@
           caption.classList.add('caption');
           caption.innerHTML = `
             <strong>Background:</strong> ${optimizedBackgroundPrompt}<br>
-            <strong>Character:</strong> ${optimizedCharacterPrompt}<br>
+            <strong>Character:</strong> ${fullCharacterPrompt}<br>
             <strong>Prompt:</strong> ${combinedPrompt}<br>
             <strong>Negative Prompt:</strong> ${optimizedNegativePrompt || 'None'}
           `;
