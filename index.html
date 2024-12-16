@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hexacola AI Image Generator</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <style>
+    /* Bendrieji stiliai */
+    body {
+      margin: 0;
+      font-family: "Courier Prime", monospace;
+      background-color: #1e1e1e; /* Tamsus fonas */
+      color: #ffffff; /* Balta spalva tekstui */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.dark-mode {
+      background-color: #121212; /* Dar tamsesnis fonas */
+      color: #e0e0e0;
+    }
+    .container {
+      width: 90%;
+      max-width: 800px;
+      text-align: center;
+      padding: 30px;
+      background-color: rgba(30, 30, 30, 0.95); /* Tamsus puslapio fonas */
+      border: 2px solid #444;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+      transition: background-color 0.3s, border-color 0.3s;
+      position: relative;
+    }
+    body.dark-mode .container {
+      background-color: rgba(18, 18, 18, 0.95);
+      border-color: #666;
+    }
+    .header {
+      margin-bottom: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .header h1 {
+      font-size: 2.5em;
+      margin: 0;
+      color: #00ffcc; /* Ryškus antraštės tekstas */
+      text-shadow: 0 0 10px rgba(0, 255, 204, 0.7);
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 25px;
+      text-align: left;
+    }
+    .input-group label {
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #00ffcc;
+      text-shadow: 0 0 5px rgba(0, 255, 204, 0.5);
+    }
+    .input-group textarea, .input-group select {
+      padding: 12px;
+      border: 2px solid #00ffcc;
+      border-radius: 8px;
+      resize: vertical;
+      font-size: 1em;
+      background-color: #2c2c2c;
+      color: #ffffff;
+      transition: background-color 0.3s, border-color 0.3s;
+      box-shadow: inset 0 0 10px rgba(0, 255, 204, 0.1);
+    }
+    body.dark-mode .input-group textarea,
+    body.dark-mode .input-group select {
+      background-color: #1e1e1e;
+      border-color: #00b3a4;
+      color: #e0e0e0;
+    }
+    .options {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      margin-bottom: 25px;
+      text-align: left;
+    }
+    .options .option {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-bottom: 15px;
+      width: 48%;
+    }
+    .options .option label {
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #00ffcc;
+      text-shadow: 0 0 5px rgba(0, 255, 204, 0.5);
+    }
+    .options .option input,
+    .options .option select {
+      padding: 8px;
+      border: 2px solid #00ffcc;
+      border-radius: 8px;
+      font-size: 1em;
+      background-color: #333333;
+      color: #ffffff;
+      transition: background-color 0.3s, border-color 0.3s;
+      width: 100%;
+      box-shadow: inset 0 0 10px rgba(0, 255, 204, 0.1);
+    }
+    body.dark-mode .options .option input,
+    body.dark-mode .options .option select {
+      background-color: #1e1e1e;
+      border-color: #00b3a4;
+      color: #e0e0e0;
+    }
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 25px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+    }
+    .buttons button {
+      padding: 12px 25px;
+      font-size: 1.1em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+    .buttons button.generate {
+      background-color: #00ffcc;
+    }
+    .buttons button.generate:hover {
+      background-color: #00e6b3;
+      transform: translateY(-2px);
+    }
+    .buttons button.dark-mode-toggle {
+      background-color: #555555;
+    }
+    .buttons button.dark-mode-toggle:hover {
+      background-color: #777777;
+      transform: translateY(-2px);
+    }
+    .buttons button.auto-toggle {
+      background-color: #ffcc00;
+      color: #000000;
+      position: relative;
+    }
+    .buttons button.auto-toggle.active {
+      background-color: #ffaa00;
+    }
+    .buttons button.auto-toggle:hover {
+      background-color: #ffaa00;
+      transform: translateY(-2px);
+    }
+    .buttons button.auto-toggle::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 125%; /* Rodoma virš mygtuko */
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #333;
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 5px;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      font-size: 0.9em;
+      z-index: 1;
+    }
+    .buttons button.auto-toggle:hover::after {
+      opacity: 1;
+    }
+    .buttons button.download {
+      background-color: #ff5722;
+    }
+    .buttons button.download:hover {
+      background-color: #e64a19;
+      transform: translateY(-2px);
+    }
+    .generated-image {
+      margin-top: 25px;
+      position: relative;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+    }
+    .image-container {
+      position: relative;
+      width: 200px;
+      /* Fiksuotas plotis, kad būtų matomi keli vaizdai */
+    }
+    .image-container img {
+      width: 100%;
+      height: auto;
+      border: 2px solid #00ffcc;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+      display: block;
+    }
+    .image-container img:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(0, 255, 204, 0.7);
+    }
+    /* Teksto aprašymas ant nuotraukos */
+    .caption {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      color: #ffffff;
+      padding: 10px;
+      box-sizing: border-box;
+      border-bottom-left-radius: 10px;
+      border-bottom-right-radius: 10px;
+      font-size: 0.9em;
+      opacity: 0;
+      transition: opacity 0.3s;
+      max-height: 50%;
+      overflow: auto;
+      text-align: left;
+    }
+    .image-container:hover .caption {
+      opacity: 1;
+    }
+    /* Laikmatis / Įkrovimo indikatorius */
+    .loader {
+      border: 8px solid #f3f3f3; /* Šviesus fonas */
+      border-top: 8px solid #00ffcc; /* Ryškus spalvos viršutinis žiedas */
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+    }
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(30, 30, 30, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 15px;
+      z-index: 9;
+      display: none; /* Pradžioje nematomas */
+      flex-direction: column;
+      gap: 15px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg) translate(-50%, -50%); }
+      100% { transform: rotate(360deg) translate(-50%, -50%); }
+    }
+    footer {
+      margin-top: 40px;
+      font-size: 0.8em;
+      color: #aaaaaa;
+    }
+    footer a {
+      color: #00ffcc;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
+    @media (max-width: 600px) {
+      .options .option {
+        width: 100%;
+      }
+      .buttons {
+        flex-direction: column;
+        gap: 15px;
+      }
+      .loader {
+        width: 40px;
+        height: 40px;
+        border-width: 6px;
+      }
+      .image-container {
+        width: 100%;
+      }
+      .caption {
+        font-size: 0.8em;
+        padding: 8px;
+      }
+    }
+    /* Modal Stiliai */
+    .modal {
+      display: none; /* Pradžioje nematomas */
+      position: fixed;
+      z-index: 100;
+      padding-top: 60px;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.9);
+    }
+    .modal-content {
+      margin: auto;
+      display: block;
+      width: 80%;
+      max-width: 1000px;
+    }
+    .modal-content, #caption {  
+      animation-name: zoom;
+      animation-duration: 0.6s;
+    }
+    @keyframes zoom {
+      from {transform:scale(0)} 
+      to {transform:scale(1)}
+    }
+    .close {
+      position: absolute;
+      top: 30px;
+      right: 45px;
+      color: #ffffff;
+      font-size: 40px;
+      font-weight: bold;
+      transition: color 0.3s;
+      cursor: pointer;
+    }
+    .close:hover,
+    .close:focus {
+      color: #00ffcc;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    @media only screen and (max-width: 700px){
+      .modal-content {
+        width: 100%;
+      }
+      .close {
+        top: 15px;
+        right: 35px;
+        font-size: 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Hexacola AI Image Generator</h1>
+    </div>
+    <div class="input-group">
+      <label for="backgroundPrompt">Background Description:</label>
+      <textarea id="backgroundPrompt" placeholder="Pvz., Saulėlydis kalnuose, ramus ežeras..."></textarea>
+    </div>
+    <div class="input-group">
+      <label for="characterPrompt">Character Description:</label>
+      <textarea id="characterPrompt" placeholder="Pvz., Jaunas riteris su sidabru kruopelė..."></textarea>
+    </div>
+    <div class="input-group">
+      <label for="negativePrompt">Negative Prompt:</label>
+      <textarea id="negativePrompt" placeholder="Pvz., nenoriu logotipo, iškraipyto stiliaus..."></textarea>
+    </div>
+    <div class="options">
+      <div class="option">
+        <label for="model">Modelis:</label>
+        <select id="model">
+          <option value="flux" selected>Flux</option>
+          <option value="flux-anime">Flux-Anime</option>
+          <option value="flux-3d">Flux-3D</option>
+          <option value="flux-pro">Flux-Pro</option>
+          <option value="flux-realism">Flux-Realism</option>
+          <option value="flux-cablyal">Flux-CablyAl</option>
+          <option value="any-dark">Any-Dark</option>
+          <option value="turbo">Turbo</option>
+          <option value="Unity">Unity</option>
+        </select>
+      </div>
+      <div class="option">
+        <label for="width">Plotis (px):</label>
+        <input type="number" id="width" value="512" min="64" max="2048" />
+      </div>
+      <div class="option">
+        <label for="height">Aukštis (px):</label>
+        <input type="number" id="height" value="512" min="64" max="2048" />
+      </div>
+      <div class="option">
+        <label for="seed">Seed:</label>
+        <input type="number" id="seed" placeholder="Palikite tuščią..." />
+      </div>
+      <div class="option">
+        <label for="imageOptions">Kiek paveikslėlių:</label>
+        <input type="number" id="imageOptions" value="1" min="1" max="10" />
+      </div>
+      <div class="option">
+        <label for="style">Stilius:</label>
+        <select id="style">
+          <option value="None">None</option>
+          <option value="Cinematic">Cinematic</option>
+          <option value="Pixel Art">Pixel Art</option>
+          <option value="Anime">Anime</option>
+          <option value="Realistic">Realistic</option>
+          <option value="Mix">Mix</option>
+        </select>
+      </div>
+    </div>
+    <div class="buttons">
+      <button class="generate" onclick="generateImage()"><i class="fas fa-magic"></i> GENERUOTI</button>
+      <button class="auto-toggle" onclick="toggleAutoMode()" id="autoToggleBtn" data-tooltip="Automatiškai optimizuoja aprašymus naudojant AI"><i class="fas fa-robot"></i> AUTO OFF</button>
+      <button class="dark-mode-toggle" onclick="toggleDarkMode()"><i class="fas fa-moon"></i> 🌙</button>
+      <button class="download" onclick="downloadAllImages()" hidden><i class="fas fa-download"></i> ATSISIŲSTI VISKĄ</button>
+    </div>
+    <div class="generated-image" id="generatedImage"></div>
+    <!-- Įkrovimo indikatorius -->
+    <div class="overlay" id="overlay">
+      <div class="loader"></div>
+      <div id="timer">Generuojama: 0s</div>
+    </div>
+  </div>
+  
+  <!-- Modal for Fullscreen Image -->
+  <div id="imageModal" class="modal">
+    <span class="close">&times;</span>
+    <img class="modal-content" id="modalImage">
+  </div>
+
+  <footer>
+    <p>
+      API dokumentacija:
+      <a href="https://github.com/pollinations/pollinations/blob/master/APIDOCS.md" target="_blank">Pollinations.AI GitHub</a>
+    </p>
+    <p>
+      Sukurta su ❤️ naudojant
+      <a href="https://pollinations.ai/" target="_blank">Pollinations.AI</a>.
+    </p>
+  </footer>
+
+  <script>
+    let timerInterval;
+    let autoMode = false;
+
+    // Išsaugoti nustatymus vietiniame saugykloje
+    function saveSettings() {
+      const backgroundPrompt = document.getElementById('backgroundPrompt').value;
+      const characterPrompt = document.getElementById('characterPrompt').value;
+      const negativePrompt = document.getElementById('negativePrompt').value;
+      const model = document.getElementById('model').value;
+      const width = document.getElementById('width').value;
+      const height = document.getElementById('height').value;
+      const seed = document.getElementById('seed').value;
+      const imageOptions = document.getElementById('imageOptions').value;
+      const style = document.getElementById('style').value;
+
+      localStorage.setItem('backgroundPrompt', backgroundPrompt);
+      localStorage.setItem('characterPrompt', characterPrompt);
+      localStorage.setItem('negativePrompt', negativePrompt);
+      localStorage.setItem('model', model);
+      localStorage.setItem('width', width);
+      localStorage.setItem('height', height);
+      localStorage.setItem('seed', seed);
+      localStorage.setItem('imageOptions', imageOptions);
+      localStorage.setItem('style', style);
+      localStorage.setItem('autoMode', autoMode);
+    }
+
+    // Įkelti nustatymus iš vietinės saugyklos
+    function loadSettings() {
+      const backgroundPrompt = localStorage.getItem('backgroundPrompt');
+      const characterPrompt = localStorage.getItem('characterPrompt');
+      const negativePrompt = localStorage.getItem('negativePrompt');
+      const model = localStorage.getItem('model');
+      const width = localStorage.getItem('width');
+      const height = localStorage.getItem('height');
+      const seed = localStorage.getItem('seed');
+      const imageOptions = localStorage.getItem('imageOptions');
+      const style = localStorage.getItem('style');
+      const savedAutoMode = localStorage.getItem('autoMode');
+
+      if (backgroundPrompt) document.getElementById('backgroundPrompt').value = backgroundPrompt;
+      if (characterPrompt) document.getElementById('characterPrompt').value = characterPrompt;
+      if (negativePrompt) document.getElementById('negativePrompt').value = negativePrompt;
+      if (model) document.getElementById('model').value = model;
+      if (width) document.getElementById('width').value = width;
+      if (height) document.getElementById('height').value = height;
+      if (seed) document.getElementById('seed').value = seed;
+      if (imageOptions) document.getElementById('imageOptions').value = imageOptions;
+      if (style) document.getElementById('style').value = style;
+      if (savedAutoMode === 'true') {
+        autoMode = true;
+        document.getElementById('autoToggleBtn').classList.add('active');
+        document.getElementById('autoToggleBtn').innerHTML = '<i class="fas fa-robot"></i> AUTO ON';
+      } else {
+        autoMode = false;
+        document.getElementById('autoToggleBtn').classList.remove('active');
+        document.getElementById('autoToggleBtn').innerHTML = '<i class="fas fa-robot"></i> AUTO OFF';
+      }
+    }
+
+    // Pradinis įkėlimas
+    document.addEventListener('DOMContentLoaded', () => {
+      loadSettings();
+      loadDarkMode();
+      setupModal();
+    });
+
+    // Tamsusis režimas
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+      const toggleBtn = document.querySelector('.dark-mode-toggle');
+      if (document.body.classList.contains('dark-mode')) {
+        toggleBtn.innerHTML = '<i class="fas fa-sun"></i> ☀️';
+      } else {
+        toggleBtn.innerHTML = '<i class="fas fa-moon"></i> 🌙';
+      }
+      localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+    }
+
+    // Įkelti tamsaus režimo nustatymus
+    function loadDarkMode() {
+      const darkMode = localStorage.getItem('darkMode');
+      if (darkMode === 'true') {
+        document.body.classList.add('dark-mode');
+        document.querySelector('.dark-mode-toggle').innerHTML = '<i class="fas fa-sun"></i> ☀️';
+      } else {
+        document.querySelector('.dark-mode-toggle').innerHTML = '<i class="fas fa-moon"></i> 🌙';
+      }
+    }
+
+    // Pridėti „AUTO“ režimo toggle funkciją
+    function toggleAutoMode() {
+      autoMode = !autoMode;
+      const toggleBtn = document.getElementById('autoToggleBtn');
+      if (autoMode) {
+        toggleBtn.classList.add('active');
+        toggleBtn.innerHTML = '<i class="fas fa-robot"></i> AUTO ON';
+      } else {
+        toggleBtn.classList.remove('active');
+        toggleBtn.innerHTML = '<i class="fas fa-robot"></i> AUTO OFF';
+      }
+      localStorage.setItem('autoMode', autoMode);
+    }
+
+    // Funkcija, kuri prideda stiliaus aprašymą į promptą
+    function appendStyleToPrompt(prompt, style) {
+      switch(style) {
+        case 'Cinematic':
+          return `${prompt}, cinematic, anamorphic lens, highly cinematic color palette, detailed lighting and shadows`;
+        case 'Pixel Art':
+          return `${prompt}, in high-quality pixel art style, vibrant colors, and detailed pixelation`;
+        case 'Anime':
+          return `${prompt}, in anime style, vibrant colors, dynamic poses, and detailed character expressions`;
+        case 'Realistic':
+          return `${prompt}, in realistic style, high detail, natural lighting, and lifelike textures`;
+        default:
+          return prompt; // "None" arba kiti nenumatyti stiliai
+      }
+    }
+
+    // Funkcija, kuri parenka atsitiktinius du stilius Mix režimui
+    function getRandomStyles() {
+      const styles = ['Cinematic', 'Pixel Art', 'Anime', 'Realistic'];
+      let first = styles[Math.floor(Math.random() * styles.length)];
+      let second = styles[Math.floor(Math.random() * styles.length)];
+      while (second === first) {
+        second = styles[Math.floor(Math.random() * styles.length)];
+      }
+      return `${first} and ${second}`;
+    }
+
+    // Funkcija, kuri prideda stiliaus aprašymą Mix režimui
+    function appendMixStyleToPrompt(prompt) {
+      const randomStyles = getRandomStyles();
+      return `${prompt}, in ${randomStyles} styles, combining elements from both styles for a unique and engaging image`;
+    }
+
+    // Modal konfigūracija
+    function setupModal() {
+      const modal = document.getElementById("imageModal");
+      const modalImg = document.getElementById("modalImage");
+      const closeBtn = document.getElementsByClassName("close")[0];
+
+      // Uždaryti modalą
+      closeBtn.onclick = function() { 
+        modal.style.display = "none";
+      }
+
+      // Uždaryti modalą, jei paspaudžiama bet kur kitur
+      window.onclick = function(event) {
+        if (event.target == modal) {
+          modal.style.display = "none";
+        }
+      }
+
+      // Atidaryti modalą, kai spustelėta ant vaizdo
+      document.getElementById('generatedImage').addEventListener('click', function(event) {
+        if(event.target.tagName === 'IMG') {
+          modal.style.display = "block";
+          modalImg.src = event.target.src;
+        }
+      });
+    }
+
+    // Generuoti vaizdą
+    async function generateImage() {
+      const generateButton = document.querySelector('.generate');
+      generateButton.disabled = true; // Išjungti mygtuką generavimo metu
+
+      const backgroundPrompt = document.getElementById('backgroundPrompt').value.trim();
+      const characterPrompt = document.getElementById('characterPrompt').value.trim();
+      const rawNegativePrompt = document.getElementById('negativePrompt').value.trim();
+      const model = document.getElementById('model').value;
+      const width = document.getElementById('width').value;
+      const height = document.getElementById('height').value;
+      const seed = document.getElementById('seed').value;
+      const imageOptions = parseInt(document.getElementById('imageOptions').value);
+      const style = document.getElementById('style').value;
+
+      if (!backgroundPrompt || !characterPrompt) {
+        alert('Prašome įvesti tiek fono, tiek personažo aprašymus.');
+        generateButton.disabled = false;
+        return;
+      }
+
+      saveSettings();
+
+      let optimizedBackgroundPrompt = backgroundPrompt;
+      let optimizedCharacterPrompt = characterPrompt;
+      let optimizedNegativePrompt = rawNegativePrompt;
+
+      if (autoMode) {
+        try {
+          // Optimizuoti background prompt
+          const backgroundResponse = await fetch('https://text.pollinations.ai/openai', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              messages: [
+                { role: 'system', content: 'You are a helpful assistant that optimizes image generation prompts for high quality.' },
+                { role: 'user', content: `Optimize the following background prompt for high-quality image generation: "${backgroundPrompt}"` }
+              ],
+              model: 'gpt-4', // Patikrinkite, ar tai teisingas modelis jūsų API
+              seed: Math.floor(Math.random() * 100000),
+              jsonMode: false
+            }),
+          });
+
+          if (!backgroundResponse.ok) {
+            throw new Error('Nepavyko susisiekti su AI paslauga.');
+          }
+
+          optimizedBackgroundPrompt = await backgroundResponse.text();
+
+          // Optimizuoti character prompt
+          const characterResponse = await fetch('https://text.pollinations.ai/openai', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              messages: [
+                { role: 'system', content: 'You are a helpful assistant that optimizes image generation prompts for high quality.' },
+                { role: 'user', content: `Optimize the following character prompt for high-quality image generation: "${characterPrompt}"` }
+              ],
+              model: 'gpt-4',
+              seed: Math.floor(Math.random() * 100000),
+              jsonMode: false
+            }),
+          });
+
+          if (!characterResponse.ok) {
+            throw new Error('Nepavyko susisiekti su AI paslauga.');
+          }
+
+          optimizedCharacterPrompt = await characterResponse.text();
+
+          // Optimizuoti negative prompt
+          if (rawNegativePrompt) {
+            const negativePromptResponse = await fetch('https://text.pollinations.ai/openai', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                messages: [
+                  { role: 'system', content: 'You are a helpful assistant that optimizes negative prompts for image generation.' },
+                  { role: 'user', content: `Optimize the following negative prompt to exclude unwanted elements: "${rawNegativePrompt}"` }
+                ],
+                model: 'gpt-4',
+                seed: Math.floor(Math.random() * 100000),
+                jsonMode: false
+              }),
+            });
+
+            if (!negativePromptResponse.ok) {
+              throw new Error('Nepavyko susisiekti su AI paslauga.');
+            }
+
+            optimizedNegativePrompt = await negativePromptResponse.text();
+          }
+        } catch (error) {
+          console.error(error);
+          alert('Klaida optimizuojant promptus su AI. Bandykite dar kartą.');
+          generateButton.disabled = false;
+          return;
+        }
+      }
+
+      // Pridėti stiliaus aprašymą į promptą, jei pasirinktas stilius
+      let combinedPrompt = `${optimizedBackgroundPrompt}, ${optimizedCharacterPrompt}`;
+      if (style === 'Mix') {
+        combinedPrompt = appendMixStyleToPrompt(combinedPrompt);
+      } else if (style !== 'None') {
+        combinedPrompt = appendStyleToPrompt(combinedPrompt, style);
+      }
+
+      // Pradėti kurti API URL
+      let urlBase = `https://image.pollinations.ai/prompt/${encodeURIComponent(combinedPrompt)}?model=${encodeURIComponent(model)}&width=${encodeURIComponent(width)}&height=${encodeURIComponent(height)}&nologo=true`;
+
+      if (optimizedNegativePrompt) {
+        urlBase += `&negative=${encodeURIComponent(optimizedNegativePrompt)}`;
+      }
+
+      try {
+        // Rodyti įkrovimo indikatorių ir pradėti laikmatį
+        const overlay = document.getElementById('overlay');
+        const timer = document.getElementById('timer');
+        overlay.style.display = 'flex';
+        let seconds = 0;
+        timer.textContent = `Generuojama: ${seconds}s`;
+        timerInterval = setInterval(() => {
+          seconds++;
+          timer.textContent = `Generuojama: ${seconds}s`;
+        }, 1000);
+
+        // Išvalyti anksčiau sugeneruotus vaizdus
+        const generatedImageDiv = document.getElementById('generatedImage');
+        generatedImageDiv.innerHTML = ''; // Užkrauti prieš pradedant generuoti naujus vaizdus
+
+        const downloadButton = document.querySelector('.download');
+        downloadButton.hidden = true;
+
+        // Generuoti vaizdus
+        const promises = [];
+        for (let i = 0; i < imageOptions; i++) {
+          let uniqueSeed;
+          if (seed) {
+            uniqueSeed = parseInt(seed) + i; // Pridėti skaičių prie pagrindinio seed
+          } else {
+            uniqueSeed = Math.floor(Math.random() * 100000); // Atsitiktinis seed
+          }
+          const url = `${urlBase}&seed=${encodeURIComponent(uniqueSeed)}`;
+          promises.push(fetch(url).then(response => {
+            if (!response.ok) {
+              throw new Error('Nepavyko sugeneruoti vaizdo.');
+            }
+            return response.blob();
+          }));
+        }
+
+        const blobs = await Promise.all(promises);
+        blobs.forEach((blob, index) => {
+          const imgUrl = URL.createObjectURL(blob);
+          const imageContainer = document.createElement('div');
+          imageContainer.classList.add('image-container');
+
+          const imgElement = document.createElement('img');
+          imgElement.src = imgUrl;
+          imgElement.alt = 'Sugeneruotas vaizdas';
+          imgElement.title = 'Spauskite norėdami padidinti';
+          imageContainer.appendChild(imgElement);
+
+          // Pridėti tekstinį aprašymą ant nuotraukos
+          const caption = document.createElement('div');
+          caption.classList.add('caption');
+          caption.innerHTML = `
+            <strong>Background:</strong> ${optimizedBackgroundPrompt}<br>
+            <strong>Character:</strong> ${optimizedCharacterPrompt}<br>
+            <strong>Prompt:</strong> ${combinedPrompt}<br>
+            <strong>Negative Prompt:</strong> ${optimizedNegativePrompt || 'None'}
+          `;
+          imageContainer.appendChild(caption);
+
+          generatedImageDiv.appendChild(imageContainer);
+        });
+
+        if (imageOptions > 1) {
+          downloadButton.hidden = false;
+        }
+      } catch (error) {
+        console.error(error);
+        alert('Klaida generuojant vaizdą. Bandykite dar kartą.');
+        document.getElementById('generatedImage').innerHTML = '';
+      } finally {
+        // Pasibaigus generavimui, paslėpti įkrovimo indikatorių ir sustabdyti laikmatį
+        document.getElementById('overlay').style.display = 'none';
+        clearInterval(timerInterval);
+        generateButton.disabled = false;
+      }
+    }
+
+    // Atsisiųsti visus vaizdus
+    function downloadAllImages() {
+      const images = document.querySelectorAll('.generated-image img');
+      if (images.length === 0) {
+        alert('Nėra vaizdų atsisiuntimui.');
+        return;
+      }
+      images.forEach((img, index) => {
+        const a = document.createElement('a');
+        a.href = img.src;
+        a.download = `hexacola_image_${index + 1}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      });
+    }
+  </script>
+</body>
+</html>
