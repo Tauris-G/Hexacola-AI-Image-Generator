@@ -456,6 +456,10 @@
           <option value="Anime">Anime</option>
           <option value="Realistic">Realistic</option>
           <option value="Mix">Mix</option>
+          <option value="Storyboard">Storyboard</option>
+          <option value="Film Noir">Film Noir</option>
+          <option value="Vintage">Vintage</option>
+          <option value="Modern">Modern</option>
         </select>
       </div>
     </div>
@@ -623,6 +627,16 @@
           return `${prompt}, in anime style, vibrant colors, dynamic poses, and detailed character expressions`;
         case 'Realistic':
           return `${prompt}, in realistic style, high detail, natural lighting, and lifelike textures`;
+        case 'Storyboard':
+          return `${prompt}, in storyboard style, focusing on composition, perspective, and scene layout`;
+        case 'Film Noir':
+          return `${prompt}, in film noir style, high contrast, dramatic lighting, and moody atmosphere`;
+        case 'Vintage':
+          return `${prompt}, in vintage style, muted colors, and classic composition`;
+        case 'Modern':
+          return `${prompt}, in modern style, clean lines, and contemporary composition`;
+        case 'Mix':
+          return appendMixStyleToPrompt(prompt);
         default:
           return prompt; // "None" arba kiti nenumatyti stiliai
       }
@@ -630,7 +644,7 @@
 
     // Funkcija, kuri parenka atsitiktinius du stilius Mix režimui
     function getRandomStyles() {
-      const styles = ['Cinematic', 'Pixel Art', 'Anime', 'Realistic'];
+      const styles = ['Cinematic', 'Pixel Art', 'Anime', 'Realistic', 'Storyboard', 'Film Noir', 'Vintage', 'Modern'];
       let first = styles[Math.floor(Math.random() * styles.length)];
       let second = styles[Math.floor(Math.random() * styles.length)];
       while (second === first) {
@@ -735,119 +749,81 @@
         }
       });
 
-      if (!backgroundPrompt || !characterPrompt) {
-        alert('Prašome įvesti tiek fono, tiek personažo aprašymus.');
-        generateButton.disabled = false;
-        return;
-      }
+      // Check if no prompts are entered
+      const noPrompts = !backgroundPrompt && !characterPrompt && additionalCharacterDescriptions.length === 0;
 
-      saveSettings();
+      let combinedPrompt = '';
 
-      let optimizedBackgroundPrompt = backgroundPrompt;
-      let optimizedCharacterPrompt = characterPrompt;
-      let optimizedNegativePrompt = rawNegativePrompt;
-
-      if (autoMode) {
+      if (noPrompts) {
+        // Generate a random prompt using Text Generation API
         try {
-          // Optimizuoti background prompt
-          const backgroundResponse = await fetch('https://text.pollinations.ai/openai', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              messages: [
-                { role: 'system', content: 'You are a helpful assistant that optimizes image generation prompts for high quality.' },
-                { role: 'user', content: `Optimize the following background prompt for high-quality image generation: "${backgroundPrompt}"` }
-              ],
-              model: 'gpt-4', // Patikrinkite, ar tai teisingas modelis jūsų API
-              seed: Math.floor(Math.random() * 100000),
-              jsonMode: false
-            }),
-          });
-
-          if (!backgroundResponse.ok) {
-            throw new Error('Nepavyko susisiekti su AI paslauga.');
-          }
-
-          optimizedBackgroundPrompt = await backgroundResponse.text();
-
-          // Optimizuoti character prompt
-          const characterResponse = await fetch('https://text.pollinations.ai/openai', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              messages: [
-                { role: 'system', content: 'You are a helpful assistant that optimizes image generation prompts for high quality.' },
-                { role: 'user', content: `Optimize the following character prompt for high-quality image generation: "${characterPrompt}"` }
-              ],
-              model: 'gpt-4', // Patikrinkite, ar tai teisingas modelis jūsų API
-              seed: Math.floor(Math.random() * 100000),
-              jsonMode: false
-            }),
-          });
-
-          if (!characterResponse.ok) {
-            throw new Error('Nepavyko susisiekti su AI paslauga.');
-          }
-
-          optimizedCharacterPrompt = await characterResponse.text();
-
-          // Optimizuoti negative prompt
-          if (rawNegativePrompt) {
-            const negativePromptResponse = await fetch('https://text.pollinations.ai/openai', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                messages: [
-                  { role: 'system', content: 'You are a helpful assistant that optimizes negative prompts for image generation.' },
-                  { role: 'user', content: `Optimize the following negative prompt to exclude unwanted elements: "${rawNegativePrompt}"` }
-                ],
-                model: 'gpt-4', // Patikrinkite, ar tai teisingas modelis jūsų API
-                seed: Math.floor(Math.random() * 100000),
-                jsonMode: false
-              }),
-            });
-
-            if (!negativePromptResponse.ok) {
-              throw new Error('Nepavyko susisiekti su AI paslauga.');
-            }
-
-            optimizedNegativePrompt = await negativePromptResponse.text();
-          }
+          combinedPrompt = await generateRandomPrompt(style);
         } catch (error) {
           console.error(error);
-          alert('Klaida optimizuojant promptus su AI. Bandykite dar kartą.');
+          alert('Nepavyko sugeneruoti atsitiktinio aprašymo. Bandykite dar kartą.');
           generateButton.disabled = false;
           return;
         }
-      }
+      } else {
+        if (!backgroundPrompt || !characterPrompt) {
+          alert('Prašome įvesti tiek fono, tiek personažo aprašymus.');
+          generateButton.disabled = false;
+          return;
+        }
+        
+        saveSettings();
 
-      // Integrate additional character descriptions
-      let fullCharacterPrompt = optimizedCharacterPrompt;
-      if (additionalCharacterDescriptions.length > 0) {
-        fullCharacterPrompt += ' ' + additionalCharacterDescriptions.join(' ');
-        // Add instructions to maintain style consistency
-        fullCharacterPrompt += ' Ensure that all characters maintain the same style, face structure, and clothing as described above.';
-      }
+        let optimizedBackgroundPrompt = backgroundPrompt;
+        let optimizedCharacterPrompt = characterPrompt;
+        let optimizedNegativePrompt = rawNegativePrompt;
 
-      // Add high-quality image descriptions
-      let combinedPrompt = `${optimizedBackgroundPrompt}, ${fullCharacterPrompt}, with correct proportions, good perspective, and excellent composition.`;
-      if (style === 'Mix') {
-        combinedPrompt = appendMixStyleToPrompt(combinedPrompt);
-      } else if (style !== 'None') {
-        combinedPrompt = appendStyleToPrompt(combinedPrompt, style);
+        if (autoMode) {
+          try {
+            // Optimize background prompt with style
+            optimizedBackgroundPrompt = await optimizePrompt(`Optimize the following background prompt for high-quality image generation in ${style} style: "${backgroundPrompt}"`);
+
+            // Optimize character prompt with style
+            optimizedCharacterPrompt = await optimizePrompt(`Optimize the following character prompt for high-quality image generation in ${style} style: "${characterPrompt}"`);
+
+            // Optimize each additional character description with style
+            for (let i = 0; i < additionalCharacterDescriptions.length; i++) {
+              additionalCharacterDescriptions[i] = await optimizePrompt(`Optimize the following character description to match the ${style} style: "${additionalCharacterDescriptions[i]}"`);
+            }
+
+            // Optimize negative prompt
+            if (rawNegativePrompt) {
+              optimizedNegativePrompt = await optimizePrompt(`Optimize the following negative prompt to exclude unwanted elements: "${rawNegativePrompt}"`);
+            }
+          } catch (error) {
+            console.error(error);
+            alert('Klaida optimizuojant promptus su AI. Bandykite dar kartą.');
+            generateButton.disabled = false;
+            return;
+          }
+        }
+
+        // Integrate additional character descriptions
+        let fullCharacterPrompt = optimizedCharacterPrompt;
+        if (additionalCharacterDescriptions.length > 0) {
+          fullCharacterPrompt += ' ' + additionalCharacterDescriptions.join(' ');
+          // Add instructions to maintain style consistency
+          fullCharacterPrompt += ' Ensure that all characters maintain the same style, face structure, and clothing as described above.';
+        }
+
+        // Add high-quality image descriptions
+        combinedPrompt = `${optimizedBackgroundPrompt}, ${fullCharacterPrompt}, with correct proportions, good perspective, and excellent composition.`;
+        if (style === 'Mix') {
+          combinedPrompt = appendMixStyleToPrompt(combinedPrompt);
+        } else if (style !== 'None') {
+          combinedPrompt = appendStyleToPrompt(combinedPrompt, style);
+        }
       }
 
       // Pradėti kurti API URL
       let urlBase = `https://image.pollinations.ai/prompt/${encodeURIComponent(combinedPrompt)}?model=${encodeURIComponent(model)}&width=${encodeURIComponent(width)}&height=${encodeURIComponent(height)}&nologo=true`;
 
-      if (optimizedNegativePrompt) {
-        urlBase += `&negative=${encodeURIComponent(optimizedNegativePrompt)}`;
+      if (!noPrompts && rawNegativePrompt) {
+        urlBase += `&negative=${encodeURIComponent(rawNegativePrompt)}`;
       }
 
       try {
@@ -903,10 +879,10 @@
           const caption = document.createElement('div');
           caption.classList.add('caption');
           caption.innerHTML = `
-            <strong>Background:</strong> ${optimizedBackgroundPrompt}<br>
-            <strong>Character:</strong> ${fullCharacterPrompt}<br>
             <strong>Prompt:</strong> ${combinedPrompt}<br>
-            <strong>Negative Prompt:</strong> ${optimizedNegativePrompt || 'None'}
+            <strong>Model:</strong> ${model}<br>
+            <strong>Dimensions:</strong> ${width}px x ${height}px<br>
+            <strong>Seed:</strong> ${seed ? uniqueSeed : 'Random'}
           `;
           imageContainer.appendChild(caption);
 
@@ -943,6 +919,68 @@
         a.click();
         document.body.removeChild(a);
       });
+    }
+
+    // Function to optimize prompt using Pollinations.AI Text Generation API
+    async function optimizePrompt(prompt) {
+      const response = await fetch('https://text.pollinations.ai/openai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: 'You are a helpful assistant that optimizes image generation prompts for high quality.' },
+            { role: 'user', content: prompt }
+          ],
+          model: 'openai', // Pollinations.AI default model
+          seed: Math.floor(Math.random() * 100000),
+          jsonMode: false
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Nepavyko susisiekti su AI paslauga.');
+      }
+
+      const optimizedPrompt = await response.text();
+      return optimizedPrompt.trim();
+    }
+
+    // Function to generate a random prompt using Pollinations.AI Text Generation API
+    async function generateRandomPrompt(style) {
+      // Define a base prompt for generating random concepts
+      const basePrompt = 'Generate a creative and detailed description for an AI-generated image that is unique and visually appealing';
+
+      const response = await fetch('https://text.pollinations.ai/openai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: 'You are a creative assistant that generates detailed and unique image descriptions.' },
+            { role: 'user', content: basePrompt }
+          ],
+          model: 'openai', // Pollinations.AI default model
+          seed: Math.floor(Math.random() * 100000),
+          jsonMode: false
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Nepavyko susisiekti su AI paslauga.');
+      }
+
+      let generatedPrompt = await response.text();
+      generatedPrompt = generatedPrompt.trim();
+
+      // Apply style if selected
+      if (style && style !== 'None') {
+        generatedPrompt = appendStyleToPrompt(generatedPrompt, style);
+      }
+
+      return generatedPrompt;
     }
   </script>
 </body>
