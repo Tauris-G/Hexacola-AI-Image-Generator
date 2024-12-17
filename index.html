@@ -584,7 +584,7 @@
       <div id="additionalCharacterDescriptions"></div>
       <div class="input-group">
         <label for="negativePrompt">Negative Prompt:</label>
-        <textarea id="negativePrompt" placeholder="Nenoriu logotipo, iškraipyto stiliaus..." readonly></textarea>
+        <textarea id="negativePrompt" placeholder="Nenoriu logotipo, iškraipyto stiliaus..."></textarea>
       </div>
       <div class="options">
         <div class="option">
@@ -1202,6 +1202,28 @@
         return generatedPrompt;
       } else {
         throw new Error('Neteisingas AI atsakymas.');
+      }
+    }
+
+    // Define the generateRandomPrompt function that the buttons will call
+    async function generateRandomPrompt(target) {
+      const style = document.getElementById('style').value;
+      const generateButton = document.querySelector('.generate-prompt');
+      generateButton.disabled = true; // Disable button during generation
+
+      try {
+        const prompt = await generateRandomPromptFunction(target, style);
+        if (target === 'background') {
+          document.getElementById('backgroundPrompt').value = prompt;
+        } else if (target === 'character') {
+          document.getElementById('characterPrompt').value = prompt;
+        }
+        alert(`Sėkmingai sugeneruotas ${target} aprašymas!`);
+      } catch (error) {
+        console.error(error);
+        alert('Klaida generuojant aprašymą. Bandykite dar kartą.');
+      } finally {
+        generateButton.disabled = false; // Re-enable button after generation
       }
     }
 
