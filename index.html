@@ -79,6 +79,7 @@
       justify-content: center;
       gap: 8px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      margin-bottom: 10px;
     }
     .sidebar .input-group button.generate-prompt {
       background-color: #00ffcc;
@@ -87,7 +88,17 @@
       background-color: #00e6b3;
       transform: translateY(-2px);
     }
-    
+    /* Library Button */
+    .sidebar .library-button {
+      background-color: #007BFF;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sidebar .library-button:hover {
+      background-color: #0056b3;
+    }
     /* Chat Area */
     .chat {
       flex: 1;
@@ -157,9 +168,8 @@
       background-color: #00e6b3;
       transform: translateY(-2px);
     }
-    
-    /* Main Container for Image Generation */
-    .container {
+    /* Main Container for Image Generation and Library */
+    .container, .library-container {
       flex: 2;
       background-color: rgba(30, 30, 30, 0.95); /* Tamsus puslapio fonas */
       border: 2px solid #444;
@@ -168,8 +178,13 @@
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
       transition: background-color 0.3s, border-color 0.3s;
       position: relative;
+      display: none; /* Hidden by default */
     }
-    body.dark-mode .container {
+    .container.active, .library-container.active {
+      display: block;
+    }
+    body.dark-mode .container,
+    body.dark-mode .library-container {
       background-color: rgba(18, 18, 18, 0.95);
       border-color: #666;
     }
@@ -179,11 +194,12 @@
       align-items: center;
       justify-content: center;
     }
-    .header h1 {
+    .header h1, .library-container h2 {
       font-size: 2.5em;
       margin: 0;
       color: #00ffcc; /* Ryškus antraštės tekstas */
       text-shadow: 0 0 10px rgba(0, 255, 204, 0.7);
+      text-align: center;
     }
     .input-group {
       display: flex;
@@ -235,6 +251,10 @@
     .input-group button#addCharacterBtn:hover {
       background-color: #00e6b3;
     }
+    .additional-character-group {
+      margin-bottom: 15px;
+      position: relative;
+    }
     .additional-character-group button {
       margin-top: 10px;
       padding: 5px 10px;
@@ -245,6 +265,9 @@
       border-radius: 5px;
       cursor: pointer;
       transition: background-color 0.3s;
+      position: absolute;
+      right: 0;
+      top: 0;
     }
     .additional-character-group button:hover {
       background-color: #e60000;
@@ -360,7 +383,7 @@
       background-color: #e64a19;
       transform: translateY(-2px);
     }
-    .generated-image {
+    .generated-image, .library-container .generated-image {
       margin-top: 25px;
       position: relative;
       display: flex;
@@ -381,6 +404,8 @@
       cursor: pointer;
       transition: transform 0.3s, box-shadow 0.3s;
       display: block;
+      filter: contrast(1.2) brightness(1.1) sepia(0.3) saturate(1.5) hue-rotate(-10deg);
+      image-rendering: pixelated;
     }
     .image-container img:hover {
       transform: scale(1.05);
@@ -446,6 +471,7 @@
       margin-top: 40px;
       font-size: 0.8em;
       color: #aaaaaa;
+      text-align: center;
     }
     footer a {
       color: #00ffcc;
@@ -466,7 +492,7 @@
         margin-bottom: 20px;
         width: 100%;
       }
-      .container {
+      .container, .library-container {
         width: 100%;
       }
     }
@@ -556,6 +582,10 @@
         <button class="generate-prompt" onclick="generateRandomPrompt('background')"><i class="fas fa-lightbulb"></i> GENERUOTI Į FONĄ</button>
         <button class="generate-prompt" onclick="generateRandomPrompt('character')"><i class="fas fa-lightbulb"></i> GENERUOTI Į PERSONAŽĄ</button>
       </div>
+      <!-- Library Button -->
+      <div class="input-group">
+        <button class="library-button" onclick="showLibrary()"><i class="fas fa-images"></i> LIBRARY</button>
+      </div>
       <!-- Chat Interface -->
       <h2>Hexacola Chat</h2>
       <div class="chat" id="chat">
@@ -568,7 +598,7 @@
     </div>
 
     <!-- Main Container for Image Generation -->
-    <div class="container">
+    <div class="container active" id="generatorContainer">
       <div class="header">
         <h1>Hexacola AI Image Generator</h1>
       </div>
@@ -644,6 +674,17 @@
       <div class="overlay" id="overlay">
         <div class="loader"></div>
         <div id="timer">Generuojama: 0s</div>
+      </div>
+    </div>
+
+    <!-- Library Container -->
+    <div class="library-container" id="libraryContainer">
+      <h2>Library</h2>
+      <div class="generated-image" id="libraryImages">
+        <!-- Saved images will appear here -->
+      </div>
+      <div class="buttons">
+        <button class="generate" onclick="showGenerator()"><i class="fas fa-arrow-left"></i> GENERATOR</button>
       </div>
     </div>
   </div>
@@ -749,6 +790,9 @@
       loadDarkMode();
       setupModal();
       initializeNegativePrompt();
+      loadGeneratedImages();
+      loadLibraryImages();
+      disableImageDownload();
     });
 
     // Inicializuoti Negative Prompt su numatytuoju tekstu
@@ -864,6 +908,14 @@
           modalImg.src = event.target.src;
         }
       });
+
+      // Atidaryti modalą, kai spustelėta ant vaizdo iš bibliotekos
+      document.getElementById('libraryImages').addEventListener('click', function(event) {
+        if(event.target.tagName === 'IMG') {
+          modal.style.display = "block";
+          modalImg.src = event.target.src;
+        }
+      });
     }
 
     // Function to add an additional character description
@@ -871,7 +923,7 @@
       const container = document.getElementById('additionalCharacterDescriptions');
       
       const descriptionCount = container.children.length;
-      if (descriptionCount >= 5) { // Limit to, say, 5 additional descriptions
+      if (descriptionCount >= 5) { // Limit to 5 additional descriptions
         alert('Galite pridėti iki 5 papildomų personažo aprašymų.');
         return;
       }
@@ -902,6 +954,52 @@
       newGroup.appendChild(removeBtn);
 
       container.appendChild(newGroup);
+    }
+
+    // Function to show the library section
+    function showLibrary() {
+      document.getElementById('generatorContainer').classList.remove('active');
+      document.getElementById('libraryContainer').classList.add('active');
+    }
+
+    // Function to show the generator section
+    function showGenerator() {
+      document.getElementById('libraryContainer').classList.remove('active');
+      document.getElementById('generatorContainer').classList.add('active');
+    }
+
+    // Function to add image to library gallery
+    function addImageToLibraryGallery(url, prompt, model, width, height, seed) {
+      const libraryImagesDiv = document.getElementById('libraryImages');
+      const imageContainer = document.createElement('div');
+      imageContainer.classList.add('image-container');
+
+      const imgElement = document.createElement('img');
+      imgElement.src = url;
+      imgElement.alt = 'Sugeneruotas vaizdas';
+      imgElement.title = 'Spauskite norėdami padidinti';
+      imageContainer.appendChild(imgElement);
+
+      // Pridėti tekstinį aprašymą ant nuotraukos
+      const caption = document.createElement('div');
+      caption.classList.add('caption');
+      caption.innerHTML = `
+        <strong>Prompt:</strong> ${prompt}<br>
+        <strong>Model:</strong> ${model}<br>
+        <strong>Dimensions:</strong> ${width}px x ${height}px<br>
+        <strong>Seed:</strong> ${seed}
+      `;
+      imageContainer.appendChild(caption);
+
+      libraryImagesDiv.appendChild(imageContainer);
+    }
+
+    // Function to load library images
+    function loadLibraryImages() {
+      let images = JSON.parse(localStorage.getItem('generatedImages')) || [];
+      images.forEach(image => {
+        addImageToLibraryGallery(image.url, image.prompt, image.model, image.width, image.height, image.seed);
+      });
     }
 
     // Generuoti vaizdą
@@ -1093,6 +1191,11 @@
           imageContainer.appendChild(caption);
 
           generatedImageDiv.appendChild(imageContainer);
+
+          // Save image to localStorage
+          saveImage(imgUrl, combinedPrompt, model, width, height, seed ? uniqueSeed : 'Random');
+          // Also add to library
+          addImageToLibraryGallery(imgUrl, combinedPrompt, model, width, height, seed ? uniqueSeed : 'Random');
         });
 
         if (imageOptions > 1) {
@@ -1107,6 +1210,7 @@
         document.getElementById('overlay').style.display = 'none';
         clearInterval(timerInterval);
         generateButton.disabled = false;
+        disableImageDownload();
       }
     }
 
@@ -1136,7 +1240,7 @@
         },
         body: JSON.stringify({
           messages: [
-            { role: 'system', content: 'Tu esi Hexacola GPT – kūrybingas ir universalus AI įrankis, skirtas generuoti aukštos kokybės promptus ir vaizdus, optimizuotus su Pollinations.AI. Tavo specializacija – kurti unikalius personažų aprašymus, įtraukiančius pasaulių fonus (backgrounds), detalizuotus scenarijus ir stilingus vaizdinius aprašymus, kurie puikiai dera su Pollinations.AI vaizdų generavimo galimybėmis. Tu atsižvelgi į stilistiką, spalvų paletę, kompoziciją ir vartotojo pageidavimus, siekdamas išlaikyti geriausią vaizdo ir teksto kokybę. Tu visada sieki kokybiškų nuotraukų ir vaizdų, atsižvelgdamas į detalumą ir estetiką. Tavo tikslas – pateikti įkvepiančius ir estetiškai harmoningus rezultatus, pritaikomus literatūrai, žaidimų dizainui, audiovizualiniams projektams ir kūrybinei saviraiškai.' },
+            { role: 'system', content: 'Tu esi Hexacola GPT – kūrybingas ir universalus AI įrankis, skirtas generuoti aukštos kokybės promptus ir vaizdus, optimizuotus su Pollinations.AI. Tavo specializacija – kurti unikalius personažų aprašymus, įtraukiančius pasaulių fonus (backgrounds), detalizuotus scenarijus ir stilingus vaizdinius aprašymus, kurie puikiai dera su Pollinations.AI vaizdų generavimo galimybėmis. Tu atsižvelgi į stilistiką, spalvų paletę, kompoziciją ir vartotojo pageidavimus, siekdamas išlaikyti geriausią vaizdo ir teksto kokybę. Tu visada sieki kokybiškų nuotraukų ir vaizdų, atsižvelgiant į detalumą ir estetiką. Tavo tikslas – pateikti įkvepiančius ir estetiškai harmoningus rezultatus, pritaikomus literatūrai, žaidimų dizainui, audiovizualiniams projektams ir kūrybinei saviraiškai.' },
             { role: 'user', content: prompt }
           ],
           model: 'openai', // Pollinations.AI default model
@@ -1176,7 +1280,7 @@
         },
         body: JSON.stringify({
           messages: [
-            { role: 'system', content: 'Tu esi Hexacola GPT – kūrybingas ir universalus AI įrankis, skirtas generuoti aukštos kokybės promptus ir vaizdus, optimizuotus su Pollinations.AI. Tavo specializacija – kurti unikalius personažų aprašymus, įtraukiančius pasaulių fonus (backgrounds), detalizuotus scenarijus ir stilingus vaizdinius aprašymus, kurie puikiai dera su Pollinations.AI vaizdų generavimo galimybėmis. Tu atsižvelgi į stilistiką, spalvų paletę, kompoziciją ir vartotojo pageidavimus, siekdamas išlaikyti geriausią vaizdo ir teksto kokybę. Tu visada sieki kokybiškų nuotraukų ir vaizdų, atsižvelgdamas į detalumą ir estetiką. Tavo tikslas – pateikti įkvepiančius ir estetiškai harmoningus rezultatus, pritaikomus literatūrai, žaidimų dizainui, audiovizualiniams projektams ir kūrybinei saviraiškai.' },
+            { role: 'system', content: 'Tu esi Hexacola GPT – kūrybingas ir universalus AI įrankis, skirtas generuoti aukštos kokybės promptus ir vaizdus, optimizuotus su Pollinations.AI. Tavo specializacija – kurti unikalius personažų aprašymus, įtraukiančius pasaulių fonus (backgrounds), detalizuotus scenarijus ir stilingus vaizdinius aprašymus, kurie puikiai dera su Pollinations.AI vaizdų generavimo galimybėmis. Tu atsižvelgi į stilistiką, spalvų paletę, kompoziciją ir vartotojo pageidavimus, siekdamas išlaikyti geriausią vaizdo ir teksto kokybę. Tu visada sieki kokybiškų nuotraukų ir vaizdų, atsižvelgiant į detalumą ir estetiką. Tavo tikslas – pateikti įkvepiančius ir estetiškai harmoningus rezultatus, pritaikomus literatūrai, žaidimų dizainui, audiovizualiniams projektams ir kūrybinei saviraiškai.' },
             { role: 'user', content: basePrompt }
           ],
           model: 'openai', // Pollinations.AI default model
@@ -1208,8 +1312,8 @@
     // Define the generateRandomPrompt function that the buttons will call
     async function generateRandomPrompt(target) {
       const style = document.getElementById('style').value;
-      const generateButton = document.querySelector('.generate-prompt');
-      generateButton.disabled = true; // Disable button during generation
+      const generateButtons = document.querySelectorAll('.generate-prompt');
+      generateButtons.forEach(button => button.disabled = true); // Disable all prompt buttons during generation
 
       try {
         const prompt = await generateRandomPromptFunction(target, style);
@@ -1223,7 +1327,7 @@
         console.error(error);
         alert('Klaida generuojant aprašymą. Bandykite dar kartą.');
       } finally {
-        generateButton.disabled = false; // Re-enable button after generation
+        generateButtons.forEach(button => button.disabled = false); // Re-enable buttons after generation
       }
     }
 
@@ -1244,7 +1348,7 @@
           },
           body: JSON.stringify({
             messages: [
-              { role: 'system', content: 'Tu esi Hexacola GPT – kūrybingas ir universalus AI įrankis, skirtas generuoti aukštos kokybės promptus ir vaizdus, optimizuotus su Pollinations.AI. Tavo specializacija – kurti unikalius personažų aprašymus, įtraukiančius pasaulių fonus (backgrounds), detalizuotus scenarijus ir stilingus vaizdinius aprašymus, kurie puikiai dera su Pollinations.AI vaizdų generavimo galimybėmis. Tu atsižvelgi į stilistiką, spalvų paletę, kompoziciją ir vartotojo pageidavimus, siekdamas išlaikyti geriausią vaizdo ir teksto kokybę. Tu visada sieki kokybiškų nuotraukų ir vaizdų, atsižvelgdamas į detalumą ir estetiką. Tavo tikslas – pateikti įkvepiančius ir estetiškai harmoningus rezultatus, pritaikomus literatūrai, žaidimų dizainui, audiovizualiniams projektams ir kūrybinei saviraiškai.' },
+              { role: 'system', content: 'Tu esi Hexacola GPT – kūrybingas ir universalus AI įrankis, skirtas generuoti aukštos kokybės promptus ir vaizdus, optimizuotus su Pollinations.AI. Tavo specializacija – kurti unikalius personažų aprašymus, įtraukiančius pasaulių fonus (backgrounds), detalizuotus scenarijus ir stilingus vaizdinius aprašymus, kurie puikiai dera su Pollinations.AI vaizdų generavimo galimybėmis. Tu atsižvelgi į stilistiką, spalvų paletę, kompoziciją ir vartotojo pageidavimus, siekdamas išlaikyti geriausią vaizdo ir teksto kokybę. Tu visada sieki kokybiškų nuotraukų ir vaizdų, atsižvelgiant į detalumą ir estetiką. Tavo tikslas – pateikti įkvepiančius ir estetiškai harmoningus rezultatus, pritaikomus literatūrai, žaidimų dizainui, audiovizualiniams projektams ir kūrybinei saviraiškai.' },
               { role: 'user', content: message }
             ],
             model: 'openai', // Pollinations.AI default model
@@ -1279,6 +1383,107 @@
       chat.appendChild(messageDiv);
       chat.scrollTop = chat.scrollHeight;
     }
+
+    // Function to save generated images to localStorage
+    function saveImage(url, prompt, model, width, height, seed) {
+      let images = JSON.parse(localStorage.getItem('generatedImages')) || [];
+      images.push({ url, prompt, model, width, height, seed });
+      localStorage.setItem('generatedImages', JSON.stringify(images));
+    }
+
+    // Function to load generated images from localStorage
+    function loadGeneratedImages() {
+      let images = JSON.parse(localStorage.getItem('generatedImages')) || [];
+      images.forEach(image => {
+        addImageToGallery(image.url, image.prompt, image.model, image.width, image.height, image.seed);
+      });
+    }
+
+    // Function to add image to gallery
+    function addImageToGallery(url, prompt, model, width, height, seed) {
+      const generatedImageDiv = document.getElementById('generatedImage');
+      const imageContainer = document.createElement('div');
+      imageContainer.classList.add('image-container');
+
+      const imgElement = document.createElement('img');
+      imgElement.src = url;
+      imgElement.alt = 'Sugeneruotas vaizdas';
+      imgElement.title = 'Spauskite norėdami padidinti';
+      imageContainer.appendChild(imgElement);
+
+      // Pridėti tekstinį aprašymą ant nuotraukos
+      const caption = document.createElement('div');
+      caption.classList.add('caption');
+      caption.innerHTML = `
+        <strong>Prompt:</strong> ${prompt}<br>
+        <strong>Model:</strong> ${model}<br>
+        <strong>Dimensions:</strong> ${width}px x ${height}px<br>
+        <strong>Seed:</strong> ${seed}
+      `;
+      imageContainer.appendChild(caption);
+
+      generatedImageDiv.appendChild(imageContainer);
+    }
+
+    // Function to add image to library gallery
+    function addImageToLibraryGallery(url, prompt, model, width, height, seed) {
+      const libraryImagesDiv = document.getElementById('libraryImages');
+      const imageContainer = document.createElement('div');
+      imageContainer.classList.add('image-container');
+
+      const imgElement = document.createElement('img');
+      imgElement.src = url;
+      imgElement.alt = 'Sugeneruotas vaizdas';
+      imgElement.title = 'Spauskite norėdami padidinti';
+      imageContainer.appendChild(imgElement);
+
+      // Pridėti tekstinį aprašymą ant nuotraukos
+      const caption = document.createElement('div');
+      caption.classList.add('caption');
+      caption.innerHTML = `
+        <strong>Prompt:</strong> ${prompt}<br>
+        <strong>Model:</strong> ${model}<br>
+        <strong>Dimensions:</strong> ${width}px x ${height}px<br>
+        <strong>Seed:</strong> ${seed}
+      `;
+      imageContainer.appendChild(caption);
+
+      libraryImagesDiv.appendChild(imageContainer);
+    }
+
+    // Function to load library images
+    function loadLibraryImages() {
+      let images = JSON.parse(localStorage.getItem('generatedImages')) || [];
+      images.forEach(image => {
+        addImageToLibraryGallery(image.url, image.prompt, image.model, image.width, image.height, image.seed);
+      });
+    }
+
+    // Function to prevent image download and right-click
+    function disableImageDownload() {
+      const images = document.querySelectorAll('.generated-image img, .library-container img');
+      images.forEach(img => {
+        img.oncontextmenu = (e) => e.preventDefault();
+        img.draggable = false;
+      });
+    }
+
+    // Function to show the library section
+    function showLibrary() {
+      document.getElementById('generatorContainer').classList.remove('active');
+      document.getElementById('libraryContainer').classList.add('active');
+    }
+
+    // Function to show the generator section
+    function showGenerator() {
+      document.getElementById('libraryContainer').classList.remove('active');
+      document.getElementById('generatorContainer').classList.add('active');
+    }
+
+    // Call disableImageDownload after loading images
+    document.addEventListener('DOMContentLoaded', () => {
+      disableImageDownload();
+    });
   </script>
 </body>
 </html>
