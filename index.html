@@ -23,14 +23,148 @@
       background-color: #121212; /* Dar tamsesnis fonas */
       color: #e0e0e0;
     }
+    .main-wrapper {
+      display: flex;
+      width: 100%;
+      max-width: 1200px;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    /* Sidebar for Chat and Prompt Generators */
+    .sidebar {
+      flex: 1;
+      max-width: 300px;
+      margin-right: 20px;
+      background-color: rgba(30, 30, 30, 0.95);
+      border: 2px solid #444;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+      transition: background-color 0.3s, border-color 0.3s;
+      display: flex;
+      flex-direction: column;
+      height: fit-content;
+    }
+    body.dark-mode .sidebar {
+      background-color: rgba(18, 18, 18, 0.95);
+      border-color: #666;
+    }
+    .sidebar h2 {
+      margin-top: 0;
+      color: #00ffcc;
+      text-shadow: 0 0 5px rgba(0, 255, 204, 0.5);
+    }
+    .sidebar .input-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    .sidebar .input-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #00ffcc;
+      text-shadow: 0 0 5px rgba(0, 255, 204, 0.5);
+    }
+    .sidebar .input-group button {
+      width: 100%;
+      padding: 10px;
+      font-size: 1em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+    .sidebar .input-group button.generate-prompt {
+      background-color: #00ffcc;
+    }
+    .sidebar .input-group button.generate-prompt:hover {
+      background-color: #00e6b3;
+      transform: translateY(-2px);
+    }
+    
+    /* Chat Area */
+    .chat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 300px;
+      background-color: rgba(18, 18, 18, 0.95);
+      border: 2px solid #666;
+      border-radius: 15px;
+      padding: 15px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+      overflow-y: auto;
+      margin-bottom: 20px;
+      max-height: 400px;
+    }
+    .chat-message {
+      margin-bottom: 15px;
+      padding: 10px;
+      border-radius: 8px;
+      background-color: #333333;
+      color: #ffffff;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+    }
+    .chat-message.user {
+      background-color: #00b3a4;
+      align-self: flex-end;
+    }
+    .chat-message.assistant {
+      background-color: #555555;
+      align-self: flex-start;
+    }
+    .chat-input-group {
+      display: flex;
+      gap: 10px;
+    }
+    .chat-input-group input {
+      flex: 1;
+      padding: 10px;
+      border: 2px solid #00ffcc;
+      border-radius: 8px;
+      background-color: #2c2c2c;
+      color: #ffffff;
+      transition: background-color 0.3s, border-color 0.3s;
+      box-shadow: inset 0 0 10px rgba(0, 255, 204, 0.1);
+    }
+    body.dark-mode .chat-input-group input {
+      background-color: #1e1e1e;
+      border-color: #00b3a4;
+      color: #e0e0e0;
+    }
+    .chat-input-group button {
+      padding: 10px 15px;
+      font-size: 1em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+      color: #ffffff;
+      background-color: #00ffcc;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+    .chat-input-group button:hover {
+      background-color: #00e6b3;
+      transform: translateY(-2px);
+    }
+    
+    /* Main Container for Image Generation */
     .container {
-      width: 90%;
-      max-width: 800px;
-      text-align: center;
-      padding: 30px;
+      flex: 2;
       background-color: rgba(30, 30, 30, 0.95); /* Tamsus puslapio fonas */
       border: 2px solid #444;
       border-radius: 15px;
+      padding: 30px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
       transition: background-color 0.3s, border-color 0.3s;
       position: relative;
@@ -321,6 +455,21 @@
     footer a:hover {
       text-decoration: underline;
     }
+    @media (max-width: 900px) {
+      .main-wrapper {
+        flex-direction: column;
+        align-items: center;
+      }
+      .sidebar {
+        max-width: none;
+        margin-right: 0;
+        margin-bottom: 20px;
+        width: 100%;
+      }
+      .container {
+        width: 100%;
+      }
+    }
     @media (max-width: 600px) {
       .options .option {
         width: 100%;
@@ -398,82 +547,104 @@
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Hexacola AI Image Generator</h1>
-    </div>
-    <div class="input-group">
-      <label for="backgroundPrompt">Background Description:</label>
-      <textarea id="backgroundPrompt" placeholder="Pvz., Saulėlydis kalnuose, ramus ežeras..."></textarea>
-    </div>
-    <div class="input-group">
-      <label for="characterPrompt">Character Description:</label>
-      <textarea id="characterPrompt" placeholder="Pvz., Jaunas riteris su sidabru kruopelė..."></textarea>
-      <button type="button" id="addCharacterBtn" onclick="addCharacterDescription()" title="Pridėti papildomą personažo aprašymą">+</button>
-    </div>
-    <div id="additionalCharacterDescriptions"></div>
-    <div class="input-group">
-      <label for="negativePrompt">Negative Prompt:</label>
-      <textarea id="negativePrompt" placeholder="Pvz., nenoriu logotipo, iškraipyto stiliaus..."></textarea>
-    </div>
-    <div class="options">
-      <div class="option">
-        <label for="model">Modelis:</label>
-        <select id="model">
-          <option value="flux" selected>Flux</option>
-          <option value="flux-anime">Flux-Anime</option>
-          <option value="flux-3d">Flux-3D</option>
-          <option value="flux-pro">Flux-Pro</option>
-          <option value="flux-realism">Flux-Realism</option>
-          <option value="flux-cablyal">Flux-CablyAl</option>
-          <option value="any-dark">Any-Dark</option>
-          <option value="turbo">Turbo</option>
-          <option value="Unity">Unity</option>
-        </select>
+  <div class="main-wrapper">
+    <!-- Sidebar for Chat and Prompt Generators -->
+    <div class="sidebar">
+      <h2>AI Prompt Generator</h2>
+      <div class="input-group">
+        <label>Generuoti Aprašymą:</label>
+        <button class="generate-prompt" onclick="generateRandomPrompt('background')"><i class="fas fa-lightbulb"></i> GENERUOTI Į FONĄ</button>
+        <button class="generate-prompt" onclick="generateRandomPrompt('character')"><i class="fas fa-lightbulb"></i> GENERUOTI Į PERSONAŽĄ</button>
       </div>
-      <div class="option">
-        <label for="width">Plotis (px):</label>
-        <input type="number" id="width" value="512" min="64" max="2048" />
+      <!-- Chat Interface -->
+      <h2>Hexacola Chat</h2>
+      <div class="chat" id="chat">
+        <!-- Chat messages will appear here -->
       </div>
-      <div class="option">
-        <label for="height">Aukštis (px):</label>
-        <input type="number" id="height" value="512" min="64" max="2048" />
-      </div>
-      <div class="option">
-        <label for="seed">Seed:</label>
-        <input type="number" id="seed" placeholder="Palikite tuščią..." />
-      </div>
-      <div class="option">
-        <label for="imageOptions">Kiek paveikslėlių:</label>
-        <input type="number" id="imageOptions" value="1" min="1" max="10" />
-      </div>
-      <div class="option">
-        <label for="style">Stilius:</label>
-        <select id="style">
-          <option value="None">None</option>
-          <option value="Cinematic">Cinematic</option>
-          <option value="Pixel Art">Pixel Art</option>
-          <option value="Anime">Anime</option>
-          <option value="Realistic">Realistic</option>
-          <option value="Mix">Mix</option>
-          <option value="Storyboard">Storyboard</option>
-          <option value="Film Noir">Film Noir</option>
-          <option value="Vintage">Vintage</option>
-          <option value="Modern">Modern</option>
-        </select>
+      <div class="chat-input-group">
+        <input type="text" id="chatInput" placeholder="Rašykite žinutę..." />
+        <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i> Siųsti</button>
       </div>
     </div>
-    <div class="buttons">
-      <button class="generate" onclick="generateImage()"><i class="fas fa-magic"></i> GENERUOTI</button>
-      <button class="auto-toggle" onclick="toggleAutoMode()" id="autoToggleBtn" data-tooltip="Automatiškai optimizuoja aprašymus naudojant AI"><i class="fas fa-robot"></i> AUTO OFF</button>
-      <button class="dark-mode-toggle" onclick="toggleDarkMode()"><i class="fas fa-moon"></i> 🌙</button>
-      <button class="download" onclick="downloadAllImages()" hidden><i class="fas fa-download"></i> ATSISIŲSTI VISKĄ</button>
-    </div>
-    <div class="generated-image" id="generatedImage"></div>
-    <!-- Įkrovimo indikatorius -->
-    <div class="overlay" id="overlay">
-      <div class="loader"></div>
-      <div id="timer">Generuojama: 0s</div>
+
+    <!-- Main Container for Image Generation -->
+    <div class="container">
+      <div class="header">
+        <h1>Hexacola AI Image Generator</h1>
+      </div>
+      <div class="input-group">
+        <label for="backgroundPrompt">Background Description:</label>
+        <textarea id="backgroundPrompt" placeholder="Pvz., Saulėlydis kalnuose, ramus ežeras..."></textarea>
+      </div>
+      <div class="input-group">
+        <label for="characterPrompt">Character Description:</label>
+        <textarea id="characterPrompt" placeholder="Pvz., Jaunas riteris su sidabru kruopelė..."></textarea>
+        <button type="button" id="addCharacterBtn" onclick="addCharacterDescription()" title="Pridėti papildomą personažo aprašymą">+</button>
+      </div>
+      <div id="additionalCharacterDescriptions"></div>
+      <div class="input-group">
+        <label for="negativePrompt">Negative Prompt:</label>
+        <textarea id="negativePrompt" placeholder="Nenoriu logotipo, iškraipyto stiliaus..." readonly></textarea>
+      </div>
+      <div class="options">
+        <div class="option">
+          <label for="model">Modelis:</label>
+          <select id="model">
+            <option value="flux" selected>Flux</option>
+            <option value="flux-anime">Flux-Anime</option>
+            <option value="flux-3d">Flux-3D</option>
+            <option value="flux-pro">Flux-Pro</option>
+            <option value="flux-realism">Flux-Realism</option>
+            <option value="flux-cablyal">Flux-CablyAl</option>
+            <option value="any-dark">Any-Dark</option>
+            <option value="turbo">Turbo</option>
+            <option value="Unity">Unity</option>
+          </select>
+        </div>
+        <div class="option">
+          <label for="width">Plotis (px):</label>
+          <input type="number" id="width" value="512" min="64" max="2048" />
+        </div>
+        <div class="option">
+          <label for="height">Aukštis (px):</label>
+          <input type="number" id="height" value="512" min="64" max="2048" />
+        </div>
+        <div class="option">
+          <label for="seed">Seed:</label>
+          <input type="number" id="seed" placeholder="Palikite tuščią..." />
+        </div>
+        <div class="option">
+          <label for="imageOptions">Kiek paveikslėlių:</label>
+          <input type="number" id="imageOptions" value="1" min="1" max="10" />
+        </div>
+        <div class="option">
+          <label for="style">Stilius:</label>
+          <select id="style">
+            <option value="None">None</option>
+            <option value="Cinematic">Cinematic</option>
+            <option value="Pixel Art">Pixel Art</option>
+            <option value="Anime">Anime</option>
+            <option value="Realistic">Realistic</option>
+            <option value="Mix">Mix</option>
+            <option value="Storyboard">Storyboard</option>
+            <option value="Film Noir">Film Noir</option>
+            <option value="Vintage">Vintage</option>
+            <option value="Modern">Modern</option>
+          </select>
+        </div>
+      </div>
+      <div class="buttons">
+        <button class="generate" onclick="generateImage()"><i class="fas fa-magic"></i> GENERUOTI</button>
+        <button class="auto-toggle" onclick="toggleAutoMode()" id="autoToggleBtn" data-tooltip="Automatiškai optimizuoja aprašymus naudojant AI"><i class="fas fa-robot"></i> AUTO OFF</button>
+        <button class="dark-mode-toggle" onclick="toggleDarkMode()"><i class="fas fa-moon"></i> 🌙</button>
+        <button class="download" onclick="downloadAllImages()" hidden><i class="fas fa-download"></i> ATSISIŲSTI VISKĄ</button>
+      </div>
+      <div class="generated-image" id="generatedImage"></div>
+      <!-- Įkrovimo indikatorius -->
+      <div class="overlay" id="overlay">
+        <div class="loader"></div>
+        <div id="timer">Generuojama: 0s</div>
+      </div>
     </div>
   </div>
   
@@ -510,7 +681,7 @@
       const imageOptions = document.getElementById('imageOptions').value;
       const style = document.getElementById('style').value;
 
-      // Collect additional character descriptions
+      // Rinkti papildomus personažo aprašymus
       const additionalCharacterDescriptions = [];
       const additionalGroups = document.querySelectorAll('.additional-character-group textarea');
       additionalGroups.forEach(textarea => {
@@ -566,7 +737,7 @@
         document.getElementById('autoToggleBtn').innerHTML = '<i class="fas fa-robot"></i> AUTO OFF';
       }
 
-      // Load additional character descriptions
+      // Įkelti papildomus personažo aprašymus
       additionalCharacterDescriptions.forEach(desc => {
         addCharacterDescription(desc);
       });
@@ -577,7 +748,16 @@
       loadSettings();
       loadDarkMode();
       setupModal();
+      initializeNegativePrompt();
     });
+
+    // Inicializuoti Negative Prompt su numatytuoju tekstu
+    function initializeNegativePrompt() {
+      const negativePrompt = document.getElementById('negativePrompt');
+      if (!negativePrompt.value) {
+        negativePrompt.value = "low quality, blurry, bad anatomy, out of focus, noise, duplicate, watermark, text, ugly, messy";
+      }
+    }
 
     // Tamsusis režimas
     function toggleDarkMode() {
@@ -622,13 +802,13 @@
         case 'Cinematic':
           return `${prompt}, cinematic, anamorphic lens, highly cinematic color palette, detailed lighting and shadows`;
         case 'Pixel Art':
-          return `${prompt}, in high-quality pixel art style, vibrant colors, and detailed pixelation`;
+          return `${prompt}, in high-quality pixel art style reminiscent of Final Fantasy, vibrant colors, and detailed pixelation`;
         case 'Anime':
-          return `${prompt}, in anime style, vibrant colors, dynamic poses, and detailed character expressions`;
+          return `${prompt}, in anime style reminiscent of Attack on Titan and Demon Slayer, vibrant colors, dynamic poses, and detailed character expressions`;
         case 'Realistic':
           return `${prompt}, in realistic style, high detail, natural lighting, and lifelike textures`;
         case 'Storyboard':
-          return `${prompt}, in storyboard style, focusing on composition, perspective, and scene layout`;
+          return `${prompt}, in black and white storyboard style, frame-by-frame, suitable for film creation, focusing on composition, perspective, and camera angles`;
         case 'Film Noir':
           return `${prompt}, in film noir style, high contrast, dramatic lighting, and moody atmosphere`;
         case 'Vintage':
@@ -739,7 +919,7 @@
       const imageOptions = parseInt(document.getElementById('imageOptions').value);
       const style = document.getElementById('style').value;
 
-      // Collect additional character descriptions
+      // Rinkti papildomus personažo aprašymus
       const additionalCharacterDescriptions = [];
       const additionalGroups = document.querySelectorAll('.additional-character-group textarea');
       additionalGroups.forEach(textarea => {
@@ -749,15 +929,20 @@
         }
       });
 
-      // Check if no prompts are entered
+      // Patikrinti, ar nėra jokių aprašymų
       const noPrompts = !backgroundPrompt && !characterPrompt && additionalCharacterDescriptions.length === 0;
 
-      let combinedPrompt = '';
+      let backgroundCombinedPrompt = '';
+      let characterCombinedPrompt = '';
 
       if (noPrompts) {
-        // Generate a random prompt using Text Generation API
+        // Jei nėra jokių aprašymų, generuoti tiek background, tiek character
         try {
-          combinedPrompt = await generateRandomPrompt(style);
+          backgroundCombinedPrompt = await generateRandomPromptFunction('background', style);
+          characterCombinedPrompt = await generateRandomPromptFunction('character', style);
+          // Priskirti sugeneruotus aprašymus
+          document.getElementById('backgroundPrompt').value = backgroundCombinedPrompt;
+          document.getElementById('characterPrompt').value = characterCombinedPrompt;
         } catch (error) {
           console.error(error);
           alert('Nepavyko sugeneruoti atsitiktinio aprašymo. Bandykite dar kartą.');
@@ -765,65 +950,86 @@
           return;
         }
       } else {
-        if (!backgroundPrompt || !characterPrompt) {
-          alert('Prašome įvesti tiek fono, tiek personažo aprašymus.');
+        // Jei yra bent vienas aprašymas, užtikrinti, kad jis atitinka tik background arba character
+        if (backgroundPrompt) {
+          backgroundCombinedPrompt = backgroundPrompt;
+        }
+        if (characterPrompt) {
+          characterCombinedPrompt = characterPrompt;
+        }
+      }
+
+      // Patikrinkite, ar yra bent vienas aprašymas
+      if ((!backgroundCombinedPrompt && !characterCombinedPrompt)) {
+        alert('Prašome įvesti bent vieną fono arba personažo aprašymą.');
+        generateButton.disabled = false;
+        return;
+      }
+
+      saveSettings();
+
+      let optimizedBackgroundPrompt = backgroundCombinedPrompt;
+      let optimizedCharacterPrompt = characterCombinedPrompt;
+      let optimizedNegativePrompt = "low quality, blurry, bad anatomy, out of focus, noise, duplicate, watermark, text, ugly, messy, " + rawNegativePrompt;
+
+      if (autoMode) {
+        try {
+          // Optimize background prompt with style
+          if (backgroundCombinedPrompt) {
+            optimizedBackgroundPrompt = await optimizePrompt(`Optimize the following background prompt for high-quality image generation in ${style} style: "${backgroundCombinedPrompt}"`);
+          }
+
+          // Optimize character prompt with style
+          if (characterCombinedPrompt) {
+            optimizedCharacterPrompt = await optimizePrompt(`Optimize the following character prompt for high-quality image generation in ${style} style: "${characterCombinedPrompt}"`);
+          }
+
+          // Optimize each additional character description with style
+          for (let i = 0; i < additionalCharacterDescriptions.length; i++) {
+            additionalCharacterDescriptions[i] = await optimizePrompt(`Optimize the following character description to match the ${style} style: "${additionalCharacterDescriptions[i]}"`);
+          }
+
+          // Optimize negative prompt
+          if (rawNegativePrompt) {
+            optimizedNegativePrompt = "low quality, blurry, bad anatomy, out of focus, noise, duplicate, watermark, text, ugly, messy, " + await optimizePrompt(`Optimize the following negative prompt to exclude unwanted elements: "${rawNegativePrompt}"`);
+          }
+        } catch (error) {
+          console.error(error);
+          alert('Klaida optimizuojant aprašymus su AI. Bandykite dar kartą.');
           generateButton.disabled = false;
           return;
         }
-        
-        saveSettings();
+      }
 
-        let optimizedBackgroundPrompt = backgroundPrompt;
-        let optimizedCharacterPrompt = characterPrompt;
-        let optimizedNegativePrompt = rawNegativePrompt;
+      // Integruoti papildomus personažo aprašymus
+      let fullCharacterPrompt = optimizedCharacterPrompt;
+      if (additionalCharacterDescriptions.length > 0) {
+        fullCharacterPrompt += ' ' + additionalCharacterDescriptions.join(' ');
+        // Pridėti instrukcijas išlaikyti stiliaus nuoseklumą
+        fullCharacterPrompt += ' Ensure that all characters maintain the same style, face structure, and clothing as described above.';
+      }
 
-        if (autoMode) {
-          try {
-            // Optimize background prompt with style
-            optimizedBackgroundPrompt = await optimizePrompt(`Optimize the following background prompt for high-quality image generation in ${style} style: "${backgroundPrompt}"`);
-
-            // Optimize character prompt with style
-            optimizedCharacterPrompt = await optimizePrompt(`Optimize the following character prompt for high-quality image generation in ${style} style: "${characterPrompt}"`);
-
-            // Optimize each additional character description with style
-            for (let i = 0; i < additionalCharacterDescriptions.length; i++) {
-              additionalCharacterDescriptions[i] = await optimizePrompt(`Optimize the following character description to match the ${style} style: "${additionalCharacterDescriptions[i]}"`);
-            }
-
-            // Optimize negative prompt
-            if (rawNegativePrompt) {
-              optimizedNegativePrompt = await optimizePrompt(`Optimize the following negative prompt to exclude unwanted elements: "${rawNegativePrompt}"`);
-            }
-          } catch (error) {
-            console.error(error);
-            alert('Klaida optimizuojant promptus su AI. Bandykite dar kartą.');
-            generateButton.disabled = false;
-            return;
-          }
-        }
-
-        // Integrate additional character descriptions
-        let fullCharacterPrompt = optimizedCharacterPrompt;
-        if (additionalCharacterDescriptions.length > 0) {
-          fullCharacterPrompt += ' ' + additionalCharacterDescriptions.join(' ');
-          // Add instructions to maintain style consistency
-          fullCharacterPrompt += ' Ensure that all characters maintain the same style, face structure, and clothing as described above.';
-        }
-
-        // Add high-quality image descriptions
+      // Pridėti aukštos kokybės vaizdo aprašymus
+      let combinedPrompt = '';
+      if (optimizedBackgroundPrompt && optimizedCharacterPrompt) {
         combinedPrompt = `${optimizedBackgroundPrompt}, ${fullCharacterPrompt}, with correct proportions, good perspective, and excellent composition.`;
-        if (style === 'Mix') {
-          combinedPrompt = appendMixStyleToPrompt(combinedPrompt);
-        } else if (style !== 'None') {
-          combinedPrompt = appendStyleToPrompt(combinedPrompt, style);
-        }
+      } else if (optimizedBackgroundPrompt) {
+        combinedPrompt = `${optimizedBackgroundPrompt}, with correct proportions, good perspective, and excellent composition.`;
+      } else if (optimizedCharacterPrompt) {
+        combinedPrompt = `${fullCharacterPrompt}, with correct proportions, good perspective, and excellent composition.`;
+      }
+
+      if (style === 'Mix') {
+        combinedPrompt = appendMixStyleToPrompt(combinedPrompt);
+      } else if (style !== 'None') {
+        combinedPrompt = appendStyleToPrompt(combinedPrompt, style);
       }
 
       // Pradėti kurti API URL
       let urlBase = `https://image.pollinations.ai/prompt/${encodeURIComponent(combinedPrompt)}?model=${encodeURIComponent(model)}&width=${encodeURIComponent(width)}&height=${encodeURIComponent(height)}&nologo=true`;
 
-      if (!noPrompts && rawNegativePrompt) {
-        urlBase += `&negative=${encodeURIComponent(rawNegativePrompt)}`;
+      if (rawNegativePrompt) {
+        urlBase += `&negative=${encodeURIComponent(optimizedNegativePrompt)}`;
       }
 
       try {
@@ -930,7 +1136,7 @@
         },
         body: JSON.stringify({
           messages: [
-            { role: 'system', content: 'You are a helpful assistant that optimizes image generation prompts for high quality.' },
+            { role: 'system', content: 'Tu esi Hexacola GPT – kūrybingas ir universalus AI įrankis, skirtas generuoti aukštos kokybės promptus ir vaizdus, optimizuotus su Pollinations.AI. Tavo specializacija – kurti unikalius personažų aprašymus, įtraukiančius pasaulių fonus (backgrounds), detalizuotus scenarijus ir stilingus vaizdinius aprašymus, kurie puikiai dera su Pollinations.AI vaizdų generavimo galimybėmis. Tu atsižvelgi į stilistiką, spalvų paletę, kompoziciją ir vartotojo pageidavimus, siekdamas išlaikyti geriausią vaizdo ir teksto kokybę. Tu visada sieki kokybiškų nuotraukų ir vaizdų, atsižvelgdamas į detalumą ir estetiką. Tavo tikslas – pateikti įkvepiančius ir estetiškai harmoningus rezultatus, pritaikomus literatūrai, žaidimų dizainui, audiovizualiniams projektams ir kūrybinei saviraiškai.' },
             { role: 'user', content: prompt }
           ],
           model: 'openai', // Pollinations.AI default model
@@ -943,14 +1149,25 @@
         throw new Error('Nepavyko susisiekti su AI paslauga.');
       }
 
-      const optimizedPrompt = await response.text();
-      return optimizedPrompt.trim();
+      const data = await response.json();
+      if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+        const optimizedPrompt = data.choices[0].message.content;
+        return optimizedPrompt.trim();
+      } else {
+        throw new Error('Neteisingas AI atsakymas.');
+      }
     }
 
     // Function to generate a random prompt using Pollinations.AI Text Generation API
-    async function generateRandomPrompt(style) {
-      // Define a base prompt for generating random concepts
-      const basePrompt = 'Generate a creative and detailed description for an AI-generated image that is unique and visually appealing';
+    async function generateRandomPromptFunction(target, style) {
+      let basePrompt = '';
+      if (target === 'background') {
+        basePrompt = 'Generate a creative and detailed description for a background of an AI-generated image that is unique and visually appealing. Ensure it is suitable for a high-quality image generation with appropriate style adaptations.';
+      } else if (target === 'character') {
+        basePrompt = 'Generate a creative and detailed description for a character of an AI-generated image that is unique and visually appealing. Ensure it is suitable for a high-quality image generation with appropriate style adaptations.';
+      } else {
+        throw new Error('Invalid target for prompt generation.');
+      }
 
       const response = await fetch('https://text.pollinations.ai/openai', {
         method: 'POST',
@@ -959,7 +1176,7 @@
         },
         body: JSON.stringify({
           messages: [
-            { role: 'system', content: 'You are a creative assistant that generates detailed and unique image descriptions.' },
+            { role: 'system', content: 'Tu esi Hexacola GPT – kūrybingas ir universalus AI įrankis, skirtas generuoti aukštos kokybės promptus ir vaizdus, optimizuotus su Pollinations.AI. Tavo specializacija – kurti unikalius personažų aprašymus, įtraukiančius pasaulių fonus (backgrounds), detalizuotus scenarijus ir stilingus vaizdinius aprašymus, kurie puikiai dera su Pollinations.AI vaizdų generavimo galimybėmis. Tu atsižvelgi į stilistiką, spalvų paletę, kompoziciją ir vartotojo pageidavimus, siekdamas išlaikyti geriausią vaizdo ir teksto kokybę. Tu visada sieki kokybiškų nuotraukų ir vaizdų, atsižvelgdamas į detalumą ir estetiką. Tavo tikslas – pateikti įkvepiančius ir estetiškai harmoningus rezultatus, pritaikomus literatūrai, žaidimų dizainui, audiovizualiniams projektams ir kūrybinei saviraiškai.' },
             { role: 'user', content: basePrompt }
           ],
           model: 'openai', // Pollinations.AI default model
@@ -972,15 +1189,73 @@
         throw new Error('Nepavyko susisiekti su AI paslauga.');
       }
 
-      let generatedPrompt = await response.text();
-      generatedPrompt = generatedPrompt.trim();
+      const data = await response.json();
+      if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+        let generatedPrompt = data.choices[0].message.content;
+        generatedPrompt = generatedPrompt.trim();
 
-      // Apply style if selected
-      if (style && style !== 'None') {
-        generatedPrompt = appendStyleToPrompt(generatedPrompt, style);
+        // Apply style if selected
+        if (style && style !== 'None') {
+          generatedPrompt = appendStyleToPrompt(generatedPrompt, style);
+        }
+
+        return generatedPrompt;
+      } else {
+        throw new Error('Neteisingas AI atsakymas.');
       }
+    }
 
-      return generatedPrompt;
+    // Chat Functionality
+    async function sendMessage() {
+      const chatInput = document.getElementById('chatInput');
+      const message = chatInput.value.trim();
+      if (message === '') return;
+
+      appendMessage('user', message);
+      chatInput.value = '';
+
+      try {
+        const response = await fetch('https://text.pollinations.ai/openai', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            messages: [
+              { role: 'system', content: 'Tu esi Hexacola GPT – kūrybingas ir universalus AI įrankis, skirtas generuoti aukštos kokybės promptus ir vaizdus, optimizuotus su Pollinations.AI. Tavo specializacija – kurti unikalius personažų aprašymus, įtraukiančius pasaulių fonus (backgrounds), detalizuotus scenarijus ir stilingus vaizdinius aprašymus, kurie puikiai dera su Pollinations.AI vaizdų generavimo galimybėmis. Tu atsižvelgi į stilistiką, spalvų paletę, kompoziciją ir vartotojo pageidavimus, siekdamas išlaikyti geriausią vaizdo ir teksto kokybę. Tu visada sieki kokybiškų nuotraukų ir vaizdų, atsižvelgdamas į detalumą ir estetiką. Tavo tikslas – pateikti įkvepiančius ir estetiškai harmoningus rezultatus, pritaikomus literatūrai, žaidimų dizainui, audiovizualiniams projektams ir kūrybinei saviraiškai.' },
+              { role: 'user', content: message }
+            ],
+            model: 'openai', // Pollinations.AI default model
+            seed: Math.floor(Math.random() * 100000),
+            jsonMode: false
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Nepavyko susisiekti su AI paslauga.');
+        }
+
+        const data = await response.json();
+        if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+          const assistantMessageContent = data.choices[0].message.content;
+          appendMessage('assistant', assistantMessageContent);
+        } else {
+          throw new Error('Neteisingas AI atsakymas.');
+        }
+      } catch (error) {
+        console.error(error);
+        appendMessage('assistant', 'Klaida bendraujant su Hexacola. Bandykite dar kartą.');
+      }
+    }
+
+    // Function to append messages to the chat
+    function appendMessage(role, content) {
+      const chat = document.getElementById('chat');
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('chat-message', role);
+      messageDiv.textContent = content;
+      chat.appendChild(messageDiv);
+      chat.scrollTop = chat.scrollHeight;
     }
   </script>
 </body>
