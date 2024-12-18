@@ -224,6 +224,7 @@
       color: #ffffff;
       transition: background-color 0.3s, border-color 0.3s;
       box-shadow: inset 0 0 10px rgba(0, 255, 204, 0.1);
+      width: 100%;
     }
     body.dark-mode .input-group textarea,
     body.dark-mode .input-group select {
@@ -376,11 +377,11 @@
     .buttons button.auto-toggle:hover::after {
       opacity: 1;
     }
-    .buttons button.download {
-      background-color: #ff5722;
+    .buttons button.clear-library {
+      background-color: #ff4444;
     }
-    .buttons button.download:hover {
-      background-color: #e64a19;
+    .buttons button.clear-library:hover {
+      background-color: #cc0000;
       transform: translateY(-2px);
     }
     .generated-image, .library-container .generated-image {
@@ -433,6 +434,28 @@
     .image-container:hover .caption {
       opacity: 1;
     }
+    .download-options {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .download-options select,
+    .download-options button {
+      padding: 5px;
+      font-size: 0.8em;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      background-color: rgba(255, 255, 255, 0.8);
+      color: #000;
+      transition: background-color 0.3s;
+    }
+    .download-options button:hover {
+      background-color: rgba(255, 255, 255, 1);
+    }
     /* Laikmatis / Įkrovimo indikatorius */
     .loader {
       border: 8px solid #f3f3f3; /* Šviesus fonas */
@@ -462,6 +485,19 @@
       display: none; /* Pradžioje nematomas */
       flex-direction: column;
       gap: 15px;
+    }
+    .progress-container {
+      width: 80%;
+      background-color: #555;
+      border-radius: 25px;
+      overflow: hidden;
+      margin-top: 15px;
+    }
+    .progress-bar {
+      height: 20px;
+      width: 0%;
+      background-color: #00ffcc;
+      transition: width 0.3s;
     }
     @keyframes spin {
       0% { transform: rotate(0deg) translate(-50%, -50%); }
@@ -516,6 +552,12 @@
         font-size: 0.8em;
         padding: 8px;
       }
+      .progress-container {
+        width: 90%;
+      }
+      .download-options {
+        flex-direction: column;
+      }
     }
     /* Modal Stiliai */
     .modal {
@@ -535,8 +577,10 @@
       display: block;
       width: 80%;
       max-width: 1000px;
+      animation-name: zoom;
+      animation-duration: 0.6s;
     }
-    .modal-content, #caption {  
+    #caption {  
       animation-name: zoom;
       animation-duration: 0.6s;
     }
@@ -651,7 +695,7 @@
           <label for="style">Stilius:</label>
           <select id="style">
             <option value="None">None</option>
-            <option value="Cinematic">Cinematic</option>
+            <option value="Film">Film</option>
             <option value="Pixel Art">Pixel Art</option>
             <option value="Anime">Anime</option>
             <option value="Realistic">Realistic</option>
@@ -659,7 +703,11 @@
             <option value="Storyboard">Storyboard</option>
             <option value="Film Noir">Film Noir</option>
             <option value="Vintage">Vintage</option>
-            <option value="Modern">Modern</option>
+            <option value="Graphic Design">Graphic Design</option>
+            <option value="Cartoon">Cartoon</option>
+            <option value="Watercolor">Watercolor</option>
+            <option value="Surrealism">Surrealism</option>
+            <option value="Comics Style">Comics Style</option>
           </select>
         </div>
       </div>
@@ -667,13 +715,20 @@
         <button class="generate" onclick="generateImage()"><i class="fas fa-magic"></i> GENERUOTI</button>
         <button class="auto-toggle" onclick="toggleAutoMode()" id="autoToggleBtn" data-tooltip="Automatiškai optimizuoja aprašymus naudojant AI"><i class="fas fa-robot"></i> AUTO OFF</button>
         <button class="dark-mode-toggle" onclick="toggleDarkMode()"><i class="fas fa-moon"></i> 🌙</button>
-        <button class="download" onclick="downloadAllImages()" hidden><i class="fas fa-download"></i> ATSISIŲSTI VISKĄ</button>
+      </div>
+      <!-- Progress Bar -->
+      <div class="progress-container" id="progressContainer" hidden>
+        <div class="progress-bar" id="progressBar"></div>
       </div>
       <div class="generated-image" id="generatedImage"></div>
       <!-- Įkrovimo indikatorius -->
       <div class="overlay" id="overlay">
         <div class="loader"></div>
         <div id="timer">Generuojama: 0s</div>
+        <!-- Progress Bar -->
+        <div class="progress-container" id="progressOverlay" hidden>
+          <div class="progress-bar" id="progressOverlayBar"></div>
+        </div>
       </div>
     </div>
 
@@ -685,6 +740,8 @@
       </div>
       <div class="buttons">
         <button class="generate" onclick="showGenerator()"><i class="fas fa-arrow-left"></i> GENERATOR</button>
+        <button class="download" onclick="downloadAllLibraryImages()"><i class="fas fa-download"></i> ATSISIŲSTI VISKĄ</button>
+        <button class="clear-library" onclick="clearLibrary()"><i class="fas fa-trash-alt"></i> IŠVALYTI LIBRARY</button>
       </div>
     </div>
   </div>
@@ -709,6 +766,8 @@
   <script>
     let timerInterval;
     let autoMode = false;
+    let totalImages = 0;
+    let generatedImagesCount = 0;
 
     // Išsaugoti nustatymus vietiniame saugykloje
     function saveSettings() {
@@ -842,33 +901,27 @@
 
     // Funkcija, kuri prideda stiliaus aprašymą į promptą
     function appendStyleToPrompt(prompt, style) {
-      switch(style) {
-        case 'Cinematic':
-          return `${prompt}, cinematic, anamorphic lens, highly cinematic color palette, detailed lighting and shadows`;
-        case 'Pixel Art':
-          return `${prompt}, in high-quality pixel art style reminiscent of Final Fantasy, vibrant colors, and detailed pixelation`;
-        case 'Anime':
-          return `${prompt}, in anime style reminiscent of Attack on Titan and Demon Slayer, vibrant colors, dynamic poses, and detailed character expressions`;
-        case 'Realistic':
-          return `${prompt}, in realistic style, high detail, natural lighting, and lifelike textures`;
-        case 'Storyboard':
-          return `${prompt}, in black and white storyboard style, frame-by-frame, suitable for film creation, focusing on composition, perspective, and camera angles`;
-        case 'Film Noir':
-          return `${prompt}, in film noir style, high contrast, dramatic lighting, and moody atmosphere`;
-        case 'Vintage':
-          return `${prompt}, in vintage style, muted colors, and classic composition`;
-        case 'Modern':
-          return `${prompt}, in modern style, clean lines, and contemporary composition`;
-        case 'Mix':
-          return appendMixStyleToPrompt(prompt);
-        default:
-          return prompt; // "None" arba kiti nenumatyti stiliai
-      }
+      const styleDescriptions = {
+        'Film': `${prompt}, cinematic masterpiece, shot with an anamorphic 35mm lens, ultra-wide aspect ratio, natural film grain, rich and moody cinematic color palette, deep contrast, dynamic range, soft and detailed lighting, natural bokeh, shallow depth of field, evocative storytelling, authentic vintage film aesthetics, timeless Hollywood style`,
+        'Pixel Art': `${prompt}, in classic pixel art style, inspired by retro games like Final Fantasy and Chrono Trigger, 16-bit aesthetic, carefully crafted pixel details, balanced color palette, nostalgic and vibrant tones, smooth shading, and authentic retro charm`,
+        'Anime': `${prompt}, in anime style inspired by classics like Attack on Titan and Demon Slayer, vivid and dynamic compositions, vibrant yet harmonious color schemes, expressive and detailed character designs, dramatic lighting, intricate line work, fluid motion elements, and a cinematic anime atmosphere`,
+        'Realistic': `${prompt}, in hyper-realistic style, photorealistic details, meticulously rendered textures, lifelike proportions, dynamic and natural lighting, realistic depth of field, authentic environments, nuanced color grading, and true-to-life materials`,
+        'Storyboard': `${prompt}, in hand-drawn black-and-white storyboard style, rough pencil sketch aesthetic, emphasizing composition, perspective, and dynamic camera angles, clear character blocking, cinematic framing, sequential flow, and annotations for action and dialogue cues`,
+        'Film Noir': `${prompt}, in classic film noir style, high contrast black-and-white imagery, dramatic chiaroscuro lighting, deep shadows, atmospheric fog, urban backdrops, vintage aesthetics, fedoras and trench coats, suspenseful mood, and intense character expressions`,
+        'Vintage': `${prompt}, in vintage style, muted and earthy color palette, soft film grain, faded textures, timeless composition, delicate vignetting, nostalgic atmosphere, classic typography, and retro-inspired design elements`,
+        'Graphic Design': `${prompt}, in modern graphic design style, clean and balanced layouts, bold typography, striking color palettes, geometric shapes, high contrast, minimalist aesthetics, layered compositions, and visually compelling visuals tailored for branding or digital media`,
+        'Cartoon': `${prompt}, in Cartoon Network-inspired style, bold and dynamic outlines, exaggerated yet balanced proportions, quirky character designs, vibrant and contrasting color palettes, playful and expressive animations, simplified but impactful backgrounds, lighthearted tone, and a touch of surreal humor reminiscent of shows like Adventure Time, The Amazing World of Gumball, and Dexter's Laboratory`,
+        'Watercolor': `${prompt}, in delicate watercolor painting style, soft brush strokes, pastel and muted tones, organic textures, flowing gradients, and a dreamy, artistic atmosphere reminiscent of classic hand-painted illustrations`,
+        'Surrealism': `${prompt}, in surreal style, dreamlike imagery, abstract forms, unconventional compositions, and a blend of reality and imagination, reminiscent of Salvador Dalí's artworks`,
+        'Comics Style': `${prompt}, in vibrant comics style, bold black outlines, dynamic panel compositions, expressive character poses, exaggerated proportions, halftone patterns, action-packed scenes, vibrant primary colors, dramatic speech bubbles, and a storytelling aesthetic reminiscent of Marvel and DC classics`,
+        'Mix': appendMixStyleToPrompt(prompt)
+      };
+      return styleDescriptions[style] || prompt; // "None" arba kiti nenumatyti stiliai
     }
 
     // Funkcija, kuri parenka atsitiktinius du stilius Mix režimui
     function getRandomStyles() {
-      const styles = ['Cinematic', 'Pixel Art', 'Anime', 'Realistic', 'Storyboard', 'Film Noir', 'Vintage', 'Modern'];
+      const styles = ['Film', 'Pixel Art', 'Anime', 'Realistic', 'Storyboard', 'Film Noir', 'Vintage', 'Graphic Design', 'Cartoon', 'Watercolor', 'Surrealism', 'Comics Style'];
       let first = styles[Math.floor(Math.random() * styles.length)];
       let second = styles[Math.floor(Math.random() * styles.length)];
       while (second === first) {
@@ -969,7 +1022,7 @@
     }
 
     // Function to add image to library gallery
-    function addImageToLibraryGallery(url, prompt, model, width, height, seed) {
+    function addImageToLibraryGallery(url, prompt, model, width, height, seed, mimeType) {
       const libraryImagesDiv = document.getElementById('libraryImages');
       const imageContainer = document.createElement('div');
       imageContainer.classList.add('image-container');
@@ -978,6 +1031,7 @@
       imgElement.src = url;
       imgElement.alt = 'Sugeneruotas vaizdas';
       imgElement.title = 'Spauskite norėdami padidinti';
+      imgElement.dataset.type = mimeType; // Store MIME type for correct file extension
       imageContainer.appendChild(imgElement);
 
       // Pridėti tekstinį aprašymą ant nuotraukos
@@ -991,15 +1045,75 @@
       `;
       imageContainer.appendChild(caption);
 
+      // Pridėti download options
+      const downloadOptions = document.createElement('div');
+      downloadOptions.classList.add('download-options');
+
+      const formatSelect = document.createElement('select');
+      formatSelect.innerHTML = `
+        <option value="png">PNG</option>
+        <option value="jpg">JPG</option>
+        <option value="webp">WEBP</option>
+      `;
+      downloadOptions.appendChild(formatSelect);
+
+      const downloadBtn = document.createElement('button');
+      downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
+      downloadBtn.onclick = () => {
+        const format = formatSelect.value;
+        downloadImage(url, `hexacola_image_${seed}.${format}`, format);
+      };
+      downloadOptions.appendChild(downloadBtn);
+
+      imageContainer.appendChild(downloadOptions);
+
       libraryImagesDiv.appendChild(imageContainer);
+    }
+
+    // Function to download image in selected format
+    async function downloadImage(url, filename, format) {
+      try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        let convertedBlob = blob;
+
+        if (format !== blob.type.split('/')[1]) {
+          const imageBitmap = await createImageBitmap(blob);
+          const canvas = document.createElement('canvas');
+          canvas.width = imageBitmap.width;
+          canvas.height = imageBitmap.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(imageBitmap, 0, 0);
+          convertedBlob = await new Promise(resolve => canvas.toBlob(resolve, `image/${format}`));
+        }
+
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(convertedBlob);
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } catch (error) {
+        console.error('Atsisiuntimo klaida:', error);
+        alert('Klaida atsisiunčiant vaizdą. Bandykite dar kartą.');
+      }
     }
 
     // Function to load library images
     function loadLibraryImages() {
       let images = JSON.parse(localStorage.getItem('generatedImages')) || [];
       images.forEach(image => {
-        addImageToLibraryGallery(image.url, image.prompt, image.model, image.width, image.height, image.seed);
+        addImageToLibraryGallery(image.url, image.prompt, image.model, image.width, image.height, image.seed, image.mimeType);
       });
+    }
+
+    // Function to clear library
+    function clearLibrary() {
+      if (confirm('Ar tikrai norite išvalyti visus vaizdus iš bibliotekos?')) {
+        localStorage.removeItem('generatedImages');
+        document.getElementById('libraryImages').innerHTML = '';
+        alert('Library sėkmingai išvalyta.');
+      }
     }
 
     // Generuoti vaizdą
@@ -1036,8 +1150,10 @@
       if (noPrompts) {
         // Jei nėra jokių aprašymų, generuoti tiek background, tiek character
         try {
-          backgroundCombinedPrompt = await generateRandomPromptFunction('background', style);
-          characterCombinedPrompt = await generateRandomPromptFunction('character', style);
+          [backgroundCombinedPrompt, characterCombinedPrompt] = await Promise.all([
+            generateRandomPromptFunction('background', style),
+            generateRandomPromptFunction('character', style)
+          ]);
           // Priskirti sugeneruotus aprašymus
           document.getElementById('backgroundPrompt').value = backgroundCombinedPrompt;
           document.getElementById('characterPrompt').value = characterCombinedPrompt;
@@ -1072,22 +1188,22 @@
 
       if (autoMode) {
         try {
-          // Optimize background prompt with style
+          // Optimizuoti background prompt su stiliumi
           if (backgroundCombinedPrompt) {
             optimizedBackgroundPrompt = await optimizePrompt(`Optimize the following background prompt for high-quality image generation in ${style} style: "${backgroundCombinedPrompt}"`);
           }
 
-          // Optimize character prompt with style
+          // Optimizuoti character prompt su stiliumi
           if (characterCombinedPrompt) {
             optimizedCharacterPrompt = await optimizePrompt(`Optimize the following character prompt for high-quality image generation in ${style} style: "${characterCombinedPrompt}"`);
           }
 
-          // Optimize each additional character description with style
+          // Optimizuoti kiekvieną papildomą personažo aprašymą su stiliumi
           for (let i = 0; i < additionalCharacterDescriptions.length; i++) {
             additionalCharacterDescriptions[i] = await optimizePrompt(`Optimize the following character description to match the ${style} style: "${additionalCharacterDescriptions[i]}"`);
           }
 
-          // Optimize negative prompt
+          // Optimizuoti negative prompt
           if (rawNegativePrompt) {
             optimizedNegativePrompt = "low quality, blurry, bad anatomy, out of focus, noise, duplicate, watermark, text, ugly, messy, " + await optimizePrompt(`Optimize the following negative prompt to exclude unwanted elements: "${rawNegativePrompt}"`);
           }
@@ -1134,7 +1250,10 @@
         // Rodyti įkrovimo indikatorių ir pradėti laikmatį
         const overlay = document.getElementById('overlay');
         const timer = document.getElementById('timer');
+        const progressOverlay = document.getElementById('progressOverlay');
+        const progressOverlayBar = document.getElementById('progressOverlayBar');
         overlay.style.display = 'flex';
+        progressOverlay.style.display = 'block';
         let seconds = 0;
         timer.textContent = `Generuojama: ${seconds}s`;
         timerInterval = setInterval(() => {
@@ -1142,14 +1261,16 @@
           timer.textContent = `Generuojama: ${seconds}s`;
         }, 1000);
 
+        // Pradėti progresijos juostos atnaujinimą
+        totalImages = imageOptions;
+        generatedImagesCount = 0;
+        updateProgressBar();
+
         // Išvalyti anksčiau sugeneruotus vaizdus
         const generatedImageDiv = document.getElementById('generatedImage');
         generatedImageDiv.innerHTML = ''; // Užkrauti prieš pradedant generuoti naujus vaizdus
 
-        const downloadButton = document.querySelector('.download');
-        downloadButton.hidden = true;
-
-        // Generuoti vaizdus
+        // Generuoti vaizdus lygiagrečiai su unikaliomis promptais
         const promises = [];
         for (let i = 0; i < imageOptions; i++) {
           let uniqueSeed;
@@ -1164,43 +1285,74 @@
               throw new Error('Nepavyko sugeneruoti vaizdo.');
             }
             return response.blob();
+          }).catch(error => {
+            console.error(`Vaizdo generavimo klaida (Seed: ${uniqueSeed}):`, error);
+            return null;
           }));
         }
 
         const blobs = await Promise.all(promises);
         blobs.forEach((blob, index) => {
-          const imgUrl = URL.createObjectURL(blob);
-          const imageContainer = document.createElement('div');
-          imageContainer.classList.add('image-container');
+          if (blob) {
+            const imgUrl = URL.createObjectURL(blob);
+            const imageContainer = document.createElement('div');
+            imageContainer.classList.add('image-container');
 
-          const imgElement = document.createElement('img');
-          imgElement.src = imgUrl;
-          imgElement.alt = 'Sugeneruotas vaizdas';
-          imgElement.title = 'Spauskite norėdami padidinti';
-          imageContainer.appendChild(imgElement);
+            const imgElement = document.createElement('img');
+            imgElement.src = imgUrl;
+            imgElement.alt = 'Sugeneruotas vaizdas';
+            imgElement.title = 'Spauskite norėdami padidinti';
+            imgElement.dataset.type = blob.type; // Store MIME type
+            imageContainer.appendChild(imgElement);
 
-          // Pridėti tekstinį aprašymą ant nuotraukos
-          const caption = document.createElement('div');
-          caption.classList.add('caption');
-          caption.innerHTML = `
-            <strong>Prompt:</strong> ${combinedPrompt}<br>
-            <strong>Model:</strong> ${model}<br>
-            <strong>Dimensions:</strong> ${width}px x ${height}px<br>
-            <strong>Seed:</strong> ${seed ? uniqueSeed : 'Random'}
-          `;
-          imageContainer.appendChild(caption);
+            // Pridėti tekstinį aprašymą ant nuotraukos
+            const caption = document.createElement('div');
+            caption.classList.add('caption');
+            caption.innerHTML = `
+              <strong>Prompt:</strong> ${combinedPrompt}<br>
+              <strong>Model:</strong> ${model}<br>
+              <strong>Dimensions:</strong> ${width}px x ${height}px<br>
+              <strong>Seed:</strong> ${seed ? uniqueSeed : 'Random'}
+            `;
+            imageContainer.appendChild(caption);
 
-          generatedImageDiv.appendChild(imageContainer);
+            // Pridėti download options
+            const downloadOptions = document.createElement('div');
+            downloadOptions.classList.add('download-options');
 
-          // Save image to localStorage
-          saveImage(imgUrl, combinedPrompt, model, width, height, seed ? uniqueSeed : 'Random');
-          // Also add to library
-          addImageToLibraryGallery(imgUrl, combinedPrompt, model, width, height, seed ? uniqueSeed : 'Random');
+            const formatSelect = document.createElement('select');
+            formatSelect.innerHTML = `
+              <option value="png">PNG</option>
+              <option value="jpg">JPG</option>
+              <option value="webp">WEBP</option>
+            `;
+            downloadOptions.appendChild(formatSelect);
+
+            const downloadBtn = document.createElement('button');
+            downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
+            downloadBtn.onclick = () => {
+              const format = formatSelect.value;
+              downloadImage(imgUrl, `hexacola_image_${seed ? uniqueSeed : index + 1}.${format}`, format);
+            };
+            downloadOptions.appendChild(downloadBtn);
+
+            imageContainer.appendChild(downloadOptions);
+
+            generatedImageDiv.appendChild(imageContainer);
+
+            // Save image to localStorage
+            saveImage(imgUrl, combinedPrompt, model, width, height, seed ? uniqueSeed : 'Random', blob.type);
+            // Also add to library
+            addImageToLibraryGallery(imgUrl, combinedPrompt, model, width, height, seed ? uniqueSeed : 'Random', blob.type);
+
+            // Atnaujinti progresijos juostą
+            generatedImagesCount++;
+            updateProgressBar();
+          } else {
+            generatedImagesCount++;
+            updateProgressBar();
+          }
         });
-
-        if (imageOptions > 1) {
-          downloadButton.hidden = false;
-        }
       } catch (error) {
         console.error(error);
         alert('Klaida generuojant vaizdą. Bandykite dar kartą.');
@@ -1210,25 +1362,38 @@
         document.getElementById('overlay').style.display = 'none';
         clearInterval(timerInterval);
         generateButton.disabled = false;
+        document.getElementById('progressOverlay').style.display = 'none';
         disableImageDownload();
       }
     }
 
-    // Atsisiųsti visus vaizdus
-    function downloadAllImages() {
-      const images = document.querySelectorAll('.generated-image img');
+    // Atsisiųsti visus vaizdus iš bibliotekos
+    async function downloadAllLibraryImages() {
+      const images = document.querySelectorAll('#libraryImages img');
       if (images.length === 0) {
         alert('Nėra vaizdų atsisiuntimui.');
         return;
       }
       images.forEach((img, index) => {
+        const mimeType = img.dataset.type || 'image/png'; // Default to png if type not found
+        const extension = mimeType.split('/')[1] || 'png';
         const a = document.createElement('a');
         a.href = img.src;
-        a.download = `hexacola_image_${index + 1}.png`;
+        a.download = `hexacola_image_${index + 1}.${extension}`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
       });
+    }
+
+    // Function to update progress bar
+    function updateProgressBar() {
+      const progressBar = document.getElementById('progressOverlayBar');
+      const progressPercentage = (generatedImagesCount / totalImages) * 100;
+      progressBar.style.width = `${progressPercentage}%`;
+      if (progressPercentage >= 100) {
+        progressBar.style.backgroundColor = '#4caf50'; // Green when complete
+      }
     }
 
     // Function to optimize prompt using Pollinations.AI Text Generation API
@@ -1385,9 +1550,9 @@
     }
 
     // Function to save generated images to localStorage
-    function saveImage(url, prompt, model, width, height, seed) {
+    function saveImage(url, prompt, model, width, height, seed, mimeType) {
       let images = JSON.parse(localStorage.getItem('generatedImages')) || [];
-      images.push({ url, prompt, model, width, height, seed });
+      images.push({ url, prompt, model, width, height, seed, mimeType });
       localStorage.setItem('generatedImages', JSON.stringify(images));
     }
 
@@ -1395,12 +1560,12 @@
     function loadGeneratedImages() {
       let images = JSON.parse(localStorage.getItem('generatedImages')) || [];
       images.forEach(image => {
-        addImageToGallery(image.url, image.prompt, image.model, image.width, image.height, image.seed);
+        addImageToGallery(image.url, image.prompt, image.model, image.width, image.height, image.seed, image.mimeType);
       });
     }
 
     // Function to add image to gallery
-    function addImageToGallery(url, prompt, model, width, height, seed) {
+    function addImageToGallery(url, prompt, model, width, height, seed, mimeType) {
       const generatedImageDiv = document.getElementById('generatedImage');
       const imageContainer = document.createElement('div');
       imageContainer.classList.add('image-container');
@@ -1409,6 +1574,7 @@
       imgElement.src = url;
       imgElement.alt = 'Sugeneruotas vaizdas';
       imgElement.title = 'Spauskite norėdami padidinti';
+      imgElement.dataset.type = mimeType; // Store MIME type for correct file extension
       imageContainer.appendChild(imgElement);
 
       // Pridėti tekstinį aprašymą ant nuotraukos
@@ -1422,11 +1588,33 @@
       `;
       imageContainer.appendChild(caption);
 
+      // Pridėti download options
+      const downloadOptions = document.createElement('div');
+      downloadOptions.classList.add('download-options');
+
+      const formatSelect = document.createElement('select');
+      formatSelect.innerHTML = `
+        <option value="png">PNG</option>
+        <option value="jpg">JPG</option>
+        <option value="webp">WEBP</option>
+      `;
+      downloadOptions.appendChild(formatSelect);
+
+      const downloadBtn = document.createElement('button');
+      downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
+      downloadBtn.onclick = () => {
+        const format = formatSelect.value;
+        downloadImage(url, `hexacola_image_${seed}.${format}`, format);
+      };
+      downloadOptions.appendChild(downloadBtn);
+
+      imageContainer.appendChild(downloadOptions);
+
       generatedImageDiv.appendChild(imageContainer);
     }
 
     // Function to add image to library gallery
-    function addImageToLibraryGallery(url, prompt, model, width, height, seed) {
+    function addImageToLibraryGallery(url, prompt, model, width, height, seed, mimeType) {
       const libraryImagesDiv = document.getElementById('libraryImages');
       const imageContainer = document.createElement('div');
       imageContainer.classList.add('image-container');
@@ -1435,6 +1623,7 @@
       imgElement.src = url;
       imgElement.alt = 'Sugeneruotas vaizdas';
       imgElement.title = 'Spauskite norėdami padidinti';
+      imgElement.dataset.type = mimeType; // Store MIME type for correct file extension
       imageContainer.appendChild(imgElement);
 
       // Pridėti tekstinį aprašymą ant nuotraukos
@@ -1448,15 +1637,58 @@
       `;
       imageContainer.appendChild(caption);
 
+      // Pridėti download options
+      const downloadOptions = document.createElement('div');
+      downloadOptions.classList.add('download-options');
+
+      const formatSelect = document.createElement('select');
+      formatSelect.innerHTML = `
+        <option value="png">PNG</option>
+        <option value="jpg">JPG</option>
+        <option value="webp">WEBP</option>
+      `;
+      downloadOptions.appendChild(formatSelect);
+
+      const downloadBtn = document.createElement('button');
+      downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
+      downloadBtn.onclick = () => {
+        const format = formatSelect.value;
+        downloadImage(url, `hexacola_image_${seed}.${format}`, format);
+      };
+      downloadOptions.appendChild(downloadBtn);
+
+      imageContainer.appendChild(downloadOptions);
+
       libraryImagesDiv.appendChild(imageContainer);
     }
 
-    // Function to load library images
-    function loadLibraryImages() {
-      let images = JSON.parse(localStorage.getItem('generatedImages')) || [];
-      images.forEach(image => {
-        addImageToLibraryGallery(image.url, image.prompt, image.model, image.width, image.height, image.seed);
-      });
+    // Function to download image in selected format
+    async function downloadImage(url, filename, format) {
+      try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        let convertedBlob = blob;
+
+        if (format !== blob.type.split('/')[1]) {
+          const imageBitmap = await createImageBitmap(blob);
+          const canvas = document.createElement('canvas');
+          canvas.width = imageBitmap.width;
+          canvas.height = imageBitmap.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(imageBitmap, 0, 0);
+          convertedBlob = await new Promise(resolve => canvas.toBlob(resolve, `image/${format}`));
+        }
+
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(convertedBlob);
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } catch (error) {
+        console.error('Atsisiuntimo klaida:', error);
+        alert('Klaida atsisiunčiant vaizdą. Bandykite dar kartą.');
+      }
     }
 
     // Function to prevent image download and right-click
@@ -1468,22 +1700,11 @@
       });
     }
 
-    // Function to show the library section
-    function showLibrary() {
-      document.getElementById('generatorContainer').classList.remove('active');
-      document.getElementById('libraryContainer').classList.add('active');
-    }
-
-    // Function to show the generator section
-    function showGenerator() {
-      document.getElementById('libraryContainer').classList.remove('active');
-      document.getElementById('generatorContainer').classList.add('active');
-    }
-
     // Call disableImageDownload after loading images
     document.addEventListener('DOMContentLoaded', () => {
       disableImageDownload();
     });
+
   </script>
 </body>
 </html>
