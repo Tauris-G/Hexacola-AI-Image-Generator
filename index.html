@@ -3,27 +3,59 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Hexacola AI Image Generator with Camera Features and Colors</title>
+  <title>Hexacola AI Image Generator with Enhanced Features</title>
+  <!-- Font Awesome for Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <!-- Google Fonts for Modern Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <style>
+    /* CSS Variables for Color Schemes */
+    :root {
+      --background-color: #1e1e1e;
+      --text-color: #ffffff;
+      --accent-color: #00ffcc;
+      --accent-hover: #00e6b3;
+      --sidebar-bg: rgba(30, 30, 30, 0.95);
+      --sidebar-border: #444;
+      --chat-bg: rgba(18, 18, 18, 0.95);
+      --button-bg: #00ffcc;
+      --button-hover: #00e6b3;
+      --button-text: #ffffff;
+      --toggle-active-bg: #00ffcc;
+      --toggle-active-text: #1e1e1e;
+      --overlay-bg: rgba(30, 30, 30, 0.8);
+      --modal-bg: rgba(0,0,0,0.9);
+      --caption-bg: rgba(0, 0, 0, 0.6);
+      --progress-bar-color: #00ffcc;
+      --loader-border: #00ffcc;
+      --footer-text: #aaaaaa;
+      --footer-link: #00ffcc;
+    }
+
+    /* Dark Mode Overrides */
+    body.dark-mode {
+      --background-color: #121212;
+      --text-color: #e0e0e0;
+      --sidebar-bg: rgba(18, 18, 18, 0.95);
+      --sidebar-border: #666;
+      --chat-bg: rgba(18, 18, 18, 0.95);
+    }
+
     /* General Styles */
     body {
       margin: 0;
-      font-family: "Courier Prime", monospace;
-      background-color: #1e1e1e;
-      color: #ffffff;
+      font-family: 'Roboto', sans-serif;
+      background-color: var(--background-color);
+      color: var(--text-color);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
       min-height: 100vh;
       transition: background-color 0.3s, color 0.3s;
-      overflow: auto; /* Enable overall page scrolling */
+      overflow: auto;
     }
-    body.dark-mode {
-      background-color: #121212;
-      color: #e0e0e0;
-    }
+
     .main-wrapper {
       display: flex;
       width: 100%;
@@ -31,16 +63,16 @@
       padding: 20px;
       box-sizing: border-box;
       flex: 1;
-      /* Removed overflow: hidden to allow scrolling */
       flex-direction: row;
       gap: 20px;
     }
+
     /* Sidebar */
     .sidebar {
       flex: 1;
       max-width: 300px;
-      background-color: rgba(30, 30, 30, 0.95);
-      border: 2px solid #444;
+      background-color: var(--sidebar-bg);
+      border: 2px solid var(--sidebar-border);
       border-radius: 15px;
       padding: 20px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
@@ -48,30 +80,32 @@
       display: flex;
       flex-direction: column;
       height: fit-content;
-      overflow-y: auto; /* Enable sidebar scrolling if content overflows */
+      overflow-y: auto;
     }
-    body.dark-mode .sidebar {
-      background-color: rgba(18, 18, 18, 0.95);
-      border-color: #666;
-    }
+
     .sidebar h2 {
       margin-top: 0;
-      color: #00ffcc;
+      color: var(--accent-color);
       text-shadow: 0 0 5px rgba(0, 255, 204, 0.5);
+      font-size: 1.5em;
     }
-    .sidebar .input-group {
+
+    /* Input Groups */
+    .input-group {
       margin-bottom: 20px;
       text-align: left;
       position: relative;
     }
-    .sidebar .input-group label {
+
+    .input-group label {
       display: block;
       margin-bottom: 8px;
       font-weight: bold;
-      color: #00ffcc;
+      color: var(--accent-color);
       text-shadow: 0 0 5px rgba(0, 255, 204, 0.5);
     }
-    .sidebar .input-group button {
+
+    .input-group button {
       width: 100%;
       padding: 10px;
       font-size: 1em;
@@ -79,7 +113,7 @@
       border-radius: 8px;
       cursor: pointer;
       transition: background-color 0.3s, transform 0.2s;
-      color: #ffffff;
+      color: var(--button-text);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -87,74 +121,117 @@
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
       margin-bottom: 10px;
     }
-    .sidebar .input-group button.generate-prompt {
-      background-color: #00ffcc;
+
+    .generate-prompt {
+      background-color: var(--button-bg);
     }
-    .sidebar .input-group button.generate-prompt:hover {
-      background-color: #00e6b3;
+
+    .generate-prompt:hover {
+      background-color: var(--button-hover);
       transform: translateY(-2px);
     }
+
+    /* Tooltip Styles */
+    .tooltip {
+      position: relative;
+      display: inline-block;
+    }
+
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 160px;
+      background-color: #555;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px 0;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -80px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+    }
+
     /* Library Button */
-    .sidebar .library-button {
+    .library-button {
       background-color: #007BFF;
       margin-bottom: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
+      border-radius: 8px;
+      transition: background-color 0.3s, transform 0.2s;
     }
-    .sidebar .library-button:hover {
+
+    .library-button:hover {
       background-color: #0056b3;
+      transform: translateY(-2px);
     }
+
     /* Chat Area */
     .chat {
       flex: 1;
       display: flex;
       flex-direction: column;
-      background-color: rgba(18, 18, 18, 0.95);
-      border: 2px solid #666;
+      background-color: var(--chat-bg);
+      border: 2px solid var(--sidebar-border);
       border-radius: 15px;
       padding: 15px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
       overflow-y: auto;
       margin-bottom: 20px;
-      max-height: 300px; /* Adjust as needed */
+      max-height: 300px;
     }
+
     .chat-message {
       margin-bottom: 15px;
       padding: 10px;
       border-radius: 8px;
       background-color: #333333;
-      color: #ffffff;
+      color: var(--text-color);
       word-wrap: break-word;
       white-space: pre-wrap;
+      transition: background-color 0.3s;
     }
+
     .chat-message.user {
       background-color: #00b3a4;
       align-self: flex-end;
     }
+
     .chat-message.assistant {
       background-color: #555555;
       align-self: flex-start;
     }
+
     .chat-input-group {
       display: flex;
       gap: 10px;
     }
+
     .chat-input-group input {
       flex: 1;
       padding: 10px;
-      border: 2px solid #00ffcc;
+      border: 2px solid var(--accent-color);
       border-radius: 8px;
       background-color: #2c2c2c;
-      color: #ffffff;
+      color: var(--text-color);
       transition: background-color 0.3s, border-color 0.3s;
       box-shadow: inset 0 0 10px rgba(0, 255, 204, 0.1);
     }
-    body.dark-mode .chat-input-group input {
-      background-color: #1e1e1e;
-      border-color: #00b3a4;
-      color: #e0e0e0;
+
+    .chat-input-group input:focus {
+      outline: none;
+      border-color: var(--accent-hover);
     }
+
     .chat-input-group button {
       padding: 10px 15px;
       font-size: 1em;
@@ -162,22 +239,24 @@
       border-radius: 8px;
       cursor: pointer;
       transition: background-color 0.3s, transform 0.2s;
-      color: #ffffff;
-      background-color: #00ffcc;
+      color: var(--button-text);
+      background-color: var(--button-bg);
       display: flex;
       align-items: center;
       gap: 5px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     }
+
     .chat-input-group button:hover {
-      background-color: #00e6b3;
+      background-color: var(--button-hover);
       transform: translateY(-2px);
     }
+
     /* Main Container */
     .container, .library-container {
       flex: 2;
-      background-color: rgba(30, 30, 30, 0.95);
-      border: 2px solid #444;
+      background-color: var(--sidebar-bg);
+      border: 2px solid var(--sidebar-border);
       border-radius: 15px;
       padding: 20px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
@@ -186,145 +265,121 @@
       display: none;
       flex-direction: column;
       height: fit-content;
-      overflow-y: auto; /* Enable container scrolling if content overflows */
+      overflow-y: auto;
     }
+
     .container.active, .library-container.active {
       display: flex;
     }
-    body.dark-mode .container,
-    body.dark-mode .library-container {
-      background-color: rgba(18, 18, 18, 0.95);
-      border-color: #666;
-    }
+
     .header {
       margin-bottom: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
     }
+
     .header h1, .library-container h2 {
       font-size: 2em;
       margin: 0;
-      color: #00ffcc;
+      color: var(--accent-color);
       text-shadow: 0 0 10px rgba(0, 255, 204, 0.7);
       text-align: center;
     }
-    .input-group {
-      display: flex;
-      flex-direction: column;
-      margin-bottom: 20px;
-      text-align: left;
-      position: relative;
-    }
-    .input-group label {
-      margin-bottom: 8px;
-      font-weight: bold;
-      color: #00ffcc;
-      text-shadow: 0 0 5px rgba(0, 255, 204, 0.5);
-    }
-    .input-group textarea, .input-group select, .input-group input {
+
+    .input-group textarea, .input-group input, .input-group select {
       padding: 10px;
-      border: 2px solid #00ffcc;
+      border: 2px solid var(--accent-color);
       border-radius: 8px;
       resize: vertical;
       font-size: 1em;
       background-color: #2c2c2c;
-      color: #ffffff;
+      color: var(--text-color);
       transition: background-color 0.3s, border-color 0.3s;
       box-shadow: inset 0 0 10px rgba(0, 255, 204, 0.1);
       width: 100%;
       box-sizing: border-box;
     }
-    body.dark-mode .input-group textarea,
-    body.dark-mode .input-group select,
-    body.dark-mode .input-group input {
-      background-color: #1e1e1e;
-      border-color: #00b3a4;
-      color: #e0e0e0;
+
+    .input-group textarea:focus, .input-group input:focus, .input-group select:focus {
+      outline: none;
+      border-color: var(--accent-hover);
     }
-    /* Additional Character Description */
-    .input-group button#addCharacterBtn {
-      margin-top: 10px;
-      padding: 5px 10px;
-      font-size: 1.2em;
-      background-color: #00ffcc;
-      color: #000;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-      width: 40px;
-      height: 40px;
-      position: absolute;
-      right: 0;
-      top: 0;
-    }
-    .input-group button#addCharacterBtn:hover {
-      background-color: #00e6b3;
-    }
-    .additional-character-group {
-      margin-bottom: 15px;
-      position: relative;
-    }
-    .additional-character-group button {
-      margin-top: 10px;
-      padding: 5px 10px;
-      font-size: 1em;
-      background-color: #ff4d4d;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-      position: absolute;
-      right: 0;
-      top: 0;
-    }
-    .additional-character-group button:hover {
-      background-color: #e60000;
-    }
-    /* Options */
-    .options {
+
+    /* Feature Toggles */
+    .toggles {
       display: flex;
       flex-wrap: wrap;
-      justify-content: space-between;
-      margin-bottom: 20px;
-      text-align: left;
       gap: 10px;
+      margin-bottom: 20px;
     }
-    .options .option {
+
+    .toggle-group {
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
-      margin-bottom: 15px;
       width: 48%;
       box-sizing: border-box;
     }
-    .options .option label {
+
+    .toggle-group label {
       margin-bottom: 8px;
       font-weight: bold;
-      color: #00ffcc;
+      color: var(--accent-color);
       text-shadow: 0 0 5px rgba(0, 255, 204, 0.5);
     }
-    .options .option input,
-    .options .option select {
-      padding: 8px;
-      border: 2px solid #00ffcc;
-      border-radius: 8px;
-      font-size: 1em;
-      background-color: #333333;
-      color: #ffffff;
-      transition: background-color 0.3s, border-color 0.3s;
+
+    .toggle-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .toggle-buttons button {
+      padding: 8px 12px;
+      font-size: 0.9em;
+      border: 2px solid var(--accent-color);
+      border-radius: 20px;
+      background-color: transparent;
+      color: var(--accent-color);
+      cursor: pointer;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .toggle-buttons button.active {
+      background-color: var(--toggle-active-bg);
+      color: var(--toggle-active-text);
+    }
+
+    .toggle-buttons button:hover {
+      background-color: var(--accent-hover);
+      color: var(--toggle-active-text);
+    }
+
+    /* Camera Features and Colors Sections */
+    .camera-color-section {
+      margin-top: 20px;
+    }
+
+    .camera-color-section h2 {
+      color: var(--accent-color);
+      text-shadow: 0 0 5px rgba(0, 255, 204, 0.5);
+      margin-bottom: 10px;
+      font-size: 1.5em;
+    }
+
+    /* Description */
+    .description {
+      margin-bottom: 20px;
+      padding: 10px;
+      border: 1px solid #ccc;
       width: 100%;
-      box-shadow: inset 0 0 10px rgba(0, 255, 204, 0.1);
+      background-color: #2c2c2c;
+      border-radius: 8px;
+      color: var(--text-color);
       box-sizing: border-box;
+      transition: background-color 0.3s, color 0.3s;
     }
-    body.dark-mode .options .option input,
-    body.dark-mode .options .option select {
-      background-color: #1e1e1e;
-      border-color: #00b3a4;
-      color: #e0e0e0;
-    }
+
     /* Buttons */
     .buttons {
       display: flex;
@@ -333,6 +388,7 @@
       margin-bottom: 20px;
       flex-wrap: wrap;
     }
+
     .buttons button {
       padding: 10px 20px;
       font-size: 1em;
@@ -340,38 +396,46 @@
       border-radius: 8px;
       cursor: pointer;
       transition: background-color 0.3s, transform 0.2s;
-      color: #ffffff;
+      color: var(--button-text);
       display: flex;
       align-items: center;
       gap: 8px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     }
+
     .buttons button.generate {
-      background-color: #00ffcc;
+      background-color: var(--button-bg);
     }
+
     .buttons button.generate:hover {
-      background-color: #00e6b3;
+      background-color: var(--button-hover);
       transform: translateY(-2px);
     }
+
     .buttons button.dark-mode-toggle {
       background-color: #555555;
     }
+
     .buttons button.dark-mode-toggle:hover {
       background-color: #777777;
       transform: translateY(-2px);
     }
+
     .buttons button.auto-toggle {
       background-color: #ffcc00;
       color: #000000;
       position: relative;
     }
+
     .buttons button.auto-toggle.active {
       background-color: #ffaa00;
     }
+
     .buttons button.auto-toggle:hover {
       background-color: #ffaa00;
       transform: translateY(-2px);
     }
+
     .buttons button.auto-toggle::after {
       content: attr(data-tooltip);
       position: absolute;
@@ -389,16 +453,20 @@
       font-size: 0.9em;
       z-index: 1;
     }
+
     .buttons button.auto-toggle:hover::after {
       opacity: 1;
     }
+
     .buttons button.clear-library {
       background-color: #ff4444;
     }
+
     .buttons button.clear-library:hover {
       background-color: #cc0000;
       transform: translateY(-2px);
     }
+
     /* Generated Images */
     .generated-image, .library-container .generated-image {
       margin-top: 20px;
@@ -408,36 +476,41 @@
       gap: 15px;
       justify-content: center;
       overflow-y: auto;
-      max-height: 400px; /* Adjust as needed */
+      max-height: 400px;
     }
+
     .image-container {
       position: relative;
       width: 200px;
       flex-shrink: 0;
+      border: 2px solid var(--accent-color);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: transform 0.3s, box-shadow 0.3s;
     }
+
     .image-container img {
       width: 100%;
       height: auto;
-      border: 2px solid #00ffcc;
-      border-radius: 10px;
       cursor: pointer;
       transition: transform 0.3s, box-shadow 0.3s;
-      display: block;
       filter: contrast(1.2) brightness(1.1) sepia(0.3) saturate(1.5) hue-rotate(-10deg);
       image-rendering: pixelated;
     }
+
     .image-container img:hover {
       transform: scale(1.05);
       box-shadow: 0 0 20px rgba(0, 255, 204, 0.7);
     }
+
     /* Caption */
     .caption {
       position: absolute;
       bottom: 0;
       left: 0;
       width: 100%;
-      background: rgba(0, 0, 0, 0.6);
-      color: #ffffff;
+      background: var(--caption-bg);
+      color: var(--text-color);
       padding: 10px;
       box-sizing: border-box;
       border-bottom-left-radius: 10px;
@@ -449,9 +522,11 @@
       overflow: auto;
       text-align: left;
     }
+
     .image-container:hover .caption {
       opacity: 1;
     }
+
     /* Download Options */
     .download-options {
       position: absolute;
@@ -461,6 +536,7 @@
       flex-direction: column;
       gap: 5px;
     }
+
     .download-options select,
     .download-options button {
       padding: 5px;
@@ -472,13 +548,15 @@
       color: #000;
       transition: background-color 0.3s;
     }
+
     .download-options button:hover {
       background-color: rgba(255, 255, 255, 1);
     }
+
     /* Loader and Overlay */
     .loader {
       border: 8px solid #f3f3f3;
-      border-top: 8px solid #00ffcc;
+      border-top: 8px solid var(--loader-border);
       border-radius: 50%;
       width: 60px;
       height: 60px;
@@ -489,13 +567,14 @@
       transform: translate(-50%, -50%);
       z-index: 10;
     }
+
     .overlay {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(30, 30, 30, 0.8);
+      background: var(--overlay-bg);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -505,6 +584,7 @@
       flex-direction: column;
       gap: 15px;
     }
+
     .progress-container {
       width: 80%;
       background-color: #555;
@@ -512,86 +592,101 @@
       overflow: hidden;
       margin-top: 15px;
     }
+
     .progress-bar {
       height: 20px;
       width: 0%;
-      background-color: #00ffcc;
+      background-color: var(--progress-bar-color);
       transition: width 0.3s;
     }
+
     @keyframes spin {
       0% { transform: rotate(0deg) translate(-50%, -50%); }
       100% { transform: rotate(360deg) translate(-50%, -50%); }
     }
+
     /* Footer */
     footer {
       margin-top: 20px;
       font-size: 0.8em;
-      color: #aaaaaa;
+      color: var(--footer-text);
       text-align: center;
       width: 100%;
     }
+
     footer a {
-      color: #00ffcc;
+      color: var(--footer-link);
       text-decoration: none;
       font-weight: bold;
     }
+
     footer a:hover {
       text-decoration: underline;
     }
+
     /* Responsive */
     @media (max-width: 1200px) {
       .main-wrapper {
         flex-direction: column;
         align-items: center;
       }
+
       .sidebar {
         max-width: none;
         margin-right: 0;
         margin-bottom: 20px;
         width: 100%;
       }
+
       .container, .library-container {
         width: 100%;
       }
-      .options .option {
+
+      .toggle-group {
         width: 100%;
       }
     }
+
     @media (max-width: 900px) {
       .chat {
         max-height: 200px;
       }
+
       .generated-image, .library-container .generated-image {
         max-height: 300px;
       }
     }
+
     @media (max-width: 600px) {
-      .options .option {
-        width: 100%;
-      }
       .buttons {
         flex-direction: column;
         gap: 15px;
       }
+
       .loader {
         width: 40px;
         height: 40px;
         border-width: 6px;
       }
+
       .image-container {
         width: 100%;
       }
+
       .caption {
         font-size: 0.8em;
         padding: 8px;
       }
+
       .progress-container {
         width: 90%;
       }
+
       .download-options {
         flex-direction: column;
       }
     }
+
     /* Modal Styles */
     .modal {
       display: none;
@@ -603,8 +698,9 @@
       width: 100%;
       height: 100%;
       overflow: auto;
-      background-color: rgba(0,0,0,0.9);
+      background-color: var(--modal-bg);
     }
+
     .modal-content {
       margin: auto;
       display: block;
@@ -613,127 +709,135 @@
       animation-name: zoom;
       animation-duration: 0.6s;
     }
+
     #caption {  
       animation-name: zoom;
       animation-duration: 0.6s;
     }
+
     @keyframes zoom {
       from {transform:scale(0)} 
       to {transform:scale(1)}
     }
+
     .close {
       position: absolute;
       top: 30px;
       right: 45px;
-      color: #ffffff;
+      color: var(--text-color);
       font-size: 40px;
       font-weight: bold;
       transition: color 0.3s;
       cursor: pointer;
     }
+
     .close:hover,
     .close:focus {
-      color: #00ffcc;
+      color: var(--accent-color);
       text-decoration: none;
       cursor: pointer;
     }
+
     @media only screen and (max-width: 700px){
       .modal-content {
         width: 100%;
       }
+
       .close {
         top: 15px;
         right: 35px;
         font-size: 30px;
       }
     }
-    /* Camera Features and Colors Styles */
-    .description {
-      margin-bottom: 20px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      width: 100%;
-      background-color: #2c2c2c;
-      border-radius: 8px;
-      color: #ffffff;
-      box-sizing: border-box;
-    }
-    .camera-color-section {
-      margin-top: 20px;
-    }
-    .camera-color-section h2 {
-      color: #00ffcc;
-      text-shadow: 0 0 5px rgba(0, 255, 204, 0.5);
-      margin-bottom: 10px;
-      font-size: 1.5em;
-    }
-    .camera-color-section select {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 10px;
-      border: 2px solid #00ffcc;
-      border-radius: 8px;
-      background-color: #2c2c2c;
-      color: #ffffff;
-      transition: background-color 0.3s, border-color 0.3s;
-      box-shadow: inset 0 0 10px rgba(0, 255, 204, 0.1);
-      box-sizing: border-box;
-    }
-    body.dark-mode .camera-color-section select {
-      background-color: #1e1e1e;
-      border-color: #00b3a4;
-      color: #e0e0e0;
-    }
   </style>
 </head>
 <body>
   <div class="main-wrapper">
     <!-- Sidebar for Chat and Prompt Generators -->
-    <div class="sidebar">
+    <aside class="sidebar" aria-label="Sidebar Navigation">
       <h2>AI Prompt Generator</h2>
       <div class="input-group">
         <label>Generuoti Aprašymą:</label>
-        <button class="generate-prompt" onclick="generateRandomPrompt('background')"><i class="fas fa-lightbulb"></i> GENERUOTI Į FONĄ</button>
-        <button class="generate-prompt" onclick="generateRandomPrompt('character')"><i class="fas fa-lightbulb"></i> GENERUOTI Į PERSONAŽĄ</button>
+        <button class="generate-prompt tooltip" onclick="generateRandomPrompt('background')" aria-label="Generuoti aprašymą į foną">
+          <i class="fas fa-lightbulb"></i> GENERUOTI Į FONĄ
+          <span class="tooltiptext">Generuoti atsitiktinį aprašymą fonui</span>
+        </button>
+        <button class="generate-prompt tooltip" onclick="generateRandomPrompt('character')" aria-label="Generuoti aprašymą į personažą">
+          <i class="fas fa-lightbulb"></i> GENERUOTI Į PERSONAŽĄ
+          <span class="tooltiptext">Generuoti atsitiktinį aprašymą personažui</span>
+        </button>
       </div>
       <!-- Library Button -->
       <div class="input-group">
-        <button class="library-button" onclick="showLibrary()"><i class="fas fa-images"></i> LIBRARY</button>
+        <button class="library-button tooltip" onclick="showLibrary()" aria-label="Atidaryti biblioteką">
+          <i class="fas fa-images"></i> LIBRARY
+          <span class="tooltiptext">Peržiūrėti sugeneruotus vaizdus</span>
+        </button>
       </div>
       <!-- Chat Interface -->
       <h2>Hexacola Chat</h2>
-      <div class="chat" id="chat">
+      <div class="chat" id="chat" role="log" aria-live="polite">
         <!-- Chat messages will appear here -->
       </div>
       <div class="chat-input-group">
-        <input type="text" id="chatInput" placeholder="Rašykite žinutę..." />
-        <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i> Siųsti</button>
+        <input type="text" id="chatInput" placeholder="Rašykite žinutę..." aria-label="Rašyti žinutę" />
+        <button onclick="sendMessage()" aria-label="Siųsti žinutę">
+          <i class="fas fa-paper-plane"></i> Siųsti
+        </button>
       </div>
-    </div>
+    </aside>
 
-    <!-- Main Container for Image Generation and Camera Features/Colors -->
-    <div class="container active" id="generatorContainer">
+    <!-- Main Container for Image Generation and Enhanced Features -->
+    <main class="container active" id="generatorContainer" aria-label="Image Generator">
       <div class="header">
         <h1>Hexacola AI Image Generator</h1>
       </div>
+      <!-- Prompts Section -->
       <div class="input-group">
         <label for="backgroundPrompt">Background Description:</label>
-        <textarea id="backgroundPrompt" placeholder="Pvz., Saulėlydis kalnuose, ramus ežeras..."></textarea>
+        <textarea id="backgroundPrompt" placeholder="Pvz., Saulėlydis kalnuose, ramus ežeras..." aria-label="Fono aprašymas"></textarea>
       </div>
       <div class="input-group">
         <label for="characterPrompt">Character Description:</label>
-        <textarea id="characterPrompt" placeholder="Pvz., Jaunas riteris su sidabru kruopelė..."></textarea>
-        <button type="button" id="addCharacterBtn" onclick="addCharacterDescription()" title="Pridėti papildomą personažo aprašymą">+</button>
+        <textarea id="characterPrompt" placeholder="Pvz., Jaunas riteris su sidabru kruopelė..." aria-label="Personažo aprašymas"></textarea>
+        <button type="button" id="addCharacterBtn" onclick="addCharacterDescription()" title="Pridėti papildomą personažo aprašymą" aria-label="Pridėti papildomą personažo aprašymą">+</button>
       </div>
-      <div id="additionalCharacterDescriptions"></div>
+      <div id="additionalCharacterDescriptions">
+        <!-- Additional character descriptions will appear here -->
+      </div>
       <div class="input-group">
         <label for="negativePrompt">Negative Prompt:</label>
-        <textarea id="negativePrompt" placeholder="Nenoriu logotipo, iškraipyto stiliaus..."></textarea>
+        <textarea id="negativePrompt" placeholder="Nenoriu logotipo, iškraipyto stiliaus..." aria-label="Neigiamas aprašymas"></textarea>
       </div>
-      <div class="options">
+      
+      <!-- Feature Toggles Section -->
+      <div class="toggles" aria-label="Feature Toggles">
+        <!-- Camera Features Toggle Group -->
+        <div class="toggle-group">
+          <label>Camera Features:</label>
+          <div class="toggle-buttons" id="cameraFeaturesToggles" role="group" aria-label="Camera Features Toggles">
+            <!-- Dynamically populated toggle buttons for camera features -->
+          </div>
+        </div>
+        <!-- Color Schemes Toggle Group -->
+        <div class="toggle-group">
+          <label>Color Schemes:</label>
+          <div class="toggle-buttons" id="colorSchemesToggles" role="group" aria-label="Color Schemes Toggles">
+            <!-- Dynamically populated toggle buttons for color schemes -->
+          </div>
+        </div>
+      </div>
+      
+      <!-- Dynamic Descriptions -->
+      <div class="description" id="dynamicDescription" aria-live="polite">
+        <!-- Descriptions for selected features and color schemes will appear here -->
+      </div>
+      
+      <!-- Options -->
+      <div class="input-group">
         <div class="option">
           <label for="model">Modelis:</label>
-          <select id="model">
+          <select id="model" aria-label="Pasirinkti modelį">
             <option value="flux" selected>Flux</option>
             <option value="flux-anime">Flux-Anime</option>
             <option value="flux-3d">Flux-3D</option>
@@ -747,23 +851,23 @@
         </div>
         <div class="option">
           <label for="width">Plotis (px):</label>
-          <input type="number" id="width" value="512" min="64" max="2048" />
+          <input type="number" id="width" value="512" min="64" max="2048" aria-label="Nustatyti plotį pikseliais" />
         </div>
         <div class="option">
           <label for="height">Aukštis (px):</label>
-          <input type="number" id="height" value="512" min="64" max="2048" />
+          <input type="number" id="height" value="512" min="64" max="2048" aria-label="Nustatyti aukštį pikseliais" />
         </div>
         <div class="option">
           <label for="seed">Seed:</label>
-          <input type="number" id="seed" placeholder="Palikite tuščią..." />
+          <input type="number" id="seed" placeholder="Palikite tuščią..." aria-label="Nustatyti sėklą" />
         </div>
         <div class="option">
           <label for="imageOptions">Kiek paveikslėlių:</label>
-          <input type="number" id="imageOptions" value="1" min="1" max="10" />
+          <input type="number" id="imageOptions" value="1" min="1" max="10" aria-label="Nustatyti paveikslėlių kiekį" />
         </div>
         <div class="option">
           <label for="style">Stilius:</label>
-          <select id="style">
+          <select id="style" aria-label="Pasirinkti stilių">
             <option value="None">None</option>
             <option value="Film">Film</option>
             <option value="Pixel Art">Pixel Art</option>
@@ -781,113 +885,72 @@
           </select>
         </div>
       </div>
-      <!-- Camera Features and Colors Section -->
-      <div class="camera-color-section">
-        <h2>Select Camera Feature</h2>
-        <select id="cameraFeatures" onchange="showCameraFeature()">
-          <option value="">Select a feature</option>
-          <option value="360 Panorama">360 Panorama</option>
-          <option value="DSLR">DSLR</option>
-          <option value="Electron Microscope">Electron Microscope</option>
-          <option value="Macro Lens">Macro Lens</option>
-          <option value="Magnification">Magnification</option>
-          <option value="Microscopy">Microscopy</option>
-          <option value="Miniature Faking">Miniature Faking</option>
-          <option value="Panorama">Panorama</option>
-          <option value="Pinhole Lens">Pinhole Lens</option>
-          <option value="Satellite Imagery">Satellite Imagery</option>
-          <option value="Super Resolution Microscopy">Super Resolution Microscopy</option>
-          <option value="Telephoto Lens">Telephoto Lens</option>
-          <option value="Telescope Lens">Telescope Lens</option>
-          <option value="Ultra Wide Angle Lens">Ultra Wide Angle Lens</option>
-          <option value="Wide Angle Lens">Wide Angle Lens</option>
-        </select>
-        <div id="cameraFeatureDescription" class="description"></div>
-
-        <h2>Select Color</h2>
-        <select id="colors" onchange="showColor()">
-          <option value="">Select a color</option>
-          <option value="Baby Blue Color">Baby Blue Color</option>
-          <option value="Baby Pink Color">Baby Pink Color</option>
-          <option value="Beige">Beige</option>
-          <option value="Blue">Blue</option>
-          <option value="Brown Color">Brown Color</option>
-          <option value="Citrus">Citrus</option>
-          <option value="Coquelicot Color">Coquelicot Color</option>
-          <option value="Cyan">Cyan</option>
-          <option value="CYMK">CYMK</option>
-          <option value="Gold Color">Gold Color</option>
-          <option value="Gray">Gray</option>
-          <option value="Grayscale Color">Grayscale Color</option>
-          <option value="Green">Green</option>
-          <option value="Hot Pink Color">Hot Pink Color</option>
-          <option value="Indigo">Indigo</option>
-          <option value="Lavender Color">Lavender Color</option>
-          <option value="Magenta">Magenta</option>
-          <option value="Matte Black Color">Matte Black Color</option>
-          <option value="Mint Color">Mint Color</option>
-          <option value="Navy Blue">Navy Blue</option>
-          <option value="Neon Blue Color">Neon Blue Color</option>
-          <option value="Neon Green Color">Neon Green Color</option>
-          <option value="Neon Orange Color">Neon Orange Color</option>
-          <option value="Neon Purple Color">Neon Purple Color</option>
-          <option value="Neon Red Color">Neon Red Color</option>
-          <option value="Neon Yellow Color">Neon Yellow Color</option>
-          <option value="Orange">Orange</option>
-          <option value="Pink">Pink</option>
-          <option value="Red">Red</option>
-          <option value="RGB">RGB</option>
-          <option value="Silver Color">Silver Color</option>
-          <option value="Teal">Teal</option>
-          <option value="Turquoise">Turquoise</option>
-          <option value="Vermillion">Vermillion</option>
-          <option value="Violet">Violet</option>
-          <option value="White">White</option>
-          <option value="Yellow">Yellow</option>
-        </select>
-        <div id="colorDescription" class="description"></div>
-      </div>
+      
+      <!-- Buttons -->
       <div class="buttons">
-        <button class="generate" onclick="generateImage()"><i class="fas fa-magic"></i> GENERUOTI</button>
-        <button class="auto-toggle" onclick="toggleAutoMode()" id="autoToggleBtn" data-tooltip="Automatiškai optimizuoja aprašymus naudojant AI"><i class="fas fa-robot"></i> AUTO OFF</button>
-        <button class="dark-mode-toggle" onclick="toggleDarkMode()"><i class="fas fa-moon"></i> 🌙</button>
+        <button class="generate tooltip" onclick="generateImage()" aria-label="Generuoti vaizdą">
+          <i class="fas fa-magic"></i> GENERUOTI
+          <span class="tooltiptext">Spauskite norėdami sugeneruoti naują vaizdą</span>
+        </button>
+        <button class="auto-toggle tooltip" onclick="toggleAutoMode()" id="autoToggleBtn" data-tooltip="Automatiškai optimizuoja aprašymus naudojant AI" aria-pressed="false" aria-label="Automatinis režimas">
+          <i class="fas fa-robot"></i> AUTO OFF
+          <span class="tooltiptext">Automatiškai optimizuoja aprašymus naudojant AI</span>
+        </button>
+        <button class="dark-mode-toggle tooltip" onclick="toggleDarkMode()" aria-label="Perjungti tamsųjį režimą">
+          <i class="fas fa-moon"></i> 🌙
+          <span class="tooltiptext">Perjungti tarp tamsaus ir šviesaus režimo</span>
+        </button>
       </div>
+      
       <!-- Progress Bar -->
-      <div class="progress-container" id="progressContainer" hidden>
+      <div class="progress-container" id="progressContainer" hidden aria-label="Generavimo progresas">
         <div class="progress-bar" id="progressBar"></div>
       </div>
-      <div class="generated-image" id="generatedImage"></div>
+      
+      <!-- Generated Images -->
+      <div class="generated-image" id="generatedImage" aria-label="Sugeneruoti vaizdai"></div>
+      
       <!-- Loading Indicator -->
-      <div class="overlay" id="overlay">
+      <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-label="Generuojama">
         <div class="loader"></div>
         <div id="timer">Generuojama: 0s</div>
         <!-- Progress Bar -->
-        <div class="progress-container" id="progressOverlay" hidden>
+        <div class="progress-container" id="progressOverlay" hidden aria-label="Generavimo progresas">
           <div class="progress-bar" id="progressOverlayBar"></div>
         </div>
       </div>
-    </div>
+    </main>
 
     <!-- Library Container -->
-    <div class="library-container" id="libraryContainer">
+    <section class="library-container" id="libraryContainer" aria-label="Biblioteka">
       <h2>Library</h2>
-      <div class="generated-image" id="libraryImages">
+      <div class="generated-image" id="libraryImages" aria-label="Bibliotekos vaizdai">
         <!-- Saved images will appear here -->
       </div>
       <div class="buttons">
-        <button class="generate" onclick="showGenerator()"><i class="fas fa-arrow-left"></i> GENERATOR</button>
-        <button class="download" onclick="downloadAllLibraryImages()"><i class="fas fa-download"></i> ATSISIŲSTI VISKĄ</button>
-        <button class="clear-library" onclick="clearLibrary()"><i class="fas fa-trash-alt"></i> IŠVALYTI LIBRARY</button>
+        <button class="generate tooltip" onclick="showGenerator()" aria-label="Atgal į generatorių">
+          <i class="fas fa-arrow-left"></i> GENERATOR
+          <span class="tooltiptext">Grįžti į vaizdo generatorių</span>
+        </button>
+        <button class="download tooltip" onclick="downloadAllLibraryImages()" aria-label="Atsisiųsti visus vaizdus">
+          <i class="fas fa-download"></i> ATSISIŲSTI VISKĄ
+          <span class="tooltiptext">Atsisiųsti visus bibliotekos vaizdus</span>
+        </button>
+        <button class="clear-library tooltip" onclick="clearLibrary()" aria-label="Išvalyti biblioteką">
+          <i class="fas fa-trash-alt"></i> IŠVALYTI LIBRARY
+          <span class="tooltiptext">Išvalyti visus vaizdus iš bibliotekos</span>
+        </button>
       </div>
-    </div>
+    </section>
   </div>
   
   <!-- Modal for Fullscreen Image -->
-  <div id="imageModal" class="modal">
-    <span class="close">&times;</span>
-    <img class="modal-content" id="modalImage">
+  <div id="imageModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalImage">
+    <span class="close" aria-label="Uždaryti">&times;</span>
+    <img class="modal-content" id="modalImage" alt="Didelis sugeneruotas vaizdas">
   </div>
 
+  <!-- Footer -->
   <footer>
     <p>
       API dokumentacija:
@@ -900,12 +963,91 @@
   </footer>
 
   <script>
+    // JavaScript Code for Hexacola AI Image Generator
+
+    // Global Variables
     let timerInterval;
     let autoMode = false;
     let totalImages = 0;
     let generatedImagesCount = 0;
 
-    // Save settings to localStorage
+    // Comprehensive List of Camera Features
+    const cameraFeaturesList = [
+      "DSLR",
+      "Wide-angle lens",
+      "Ultra-wide lens",
+      "Telephoto lens",
+      "Macro lens",
+      "Fisheye lens",
+      "Tilt-shift lens",
+      "Pinhole camera",
+      "360-degree panorama",
+      "Satellite imagery",
+      "Super-resolution microscopy",
+      "Infrared photography",
+      "Black-and-white film",
+      "Vintage film camera",
+      "Polaroid/instant camera",
+      "Action camera (e.g., GoPro)",
+      "Low-light/night photography lens",
+      "Portrait lens (e.g., 85mm f/1.4)",
+      "Large-format camera",
+      "Medium-format camera",
+      "Smartphone lens simulation",
+      "Cinematic anamorphic lens",
+      "Experimental lens effects (e.g., lens flare, kaleidoscope)"
+    ];
+
+    // Comprehensive List of Color Schemes based on Color Theory
+    const colorSchemesList = [
+      "Complementary",
+      "Analogous",
+      "Triadic",
+      "Tetradic",
+      "Split-Complementary",
+      "Monochromatic"
+    ];
+
+    // Descriptions for Camera Features
+    const cameraFeatureDescriptions = {
+      "DSLR": "Digital Single-Lens Reflex cameras are known for their versatility, high image quality, and interchangeable lenses.",
+      "Wide-angle lens": "A lens with a shorter focal length that captures a wider field of view than standard lenses.",
+      "Ultra-wide lens": "A lens with an extremely wide field of view, ideal for capturing expansive landscapes and architecture.",
+      "Telephoto lens": "A lens with a long focal length that allows photographers to capture distant subjects with magnification.",
+      "Macro lens": "A lens designed for extreme close-up photography, allowing you to capture fine details of small subjects.",
+      "Fisheye lens": "An ultra wide-angle lens that creates a spherical, distorted view, often used for creative and artistic photography.",
+      "Tilt-shift lens": "A lens that allows for tilting and shifting to control the plane of focus and perspective distortion.",
+      "Pinhole camera": "A simple camera without glass lenses, using a tiny aperture to create images with unique depth and focus characteristics.",
+      "360-degree panorama": "A camera feature that allows capturing a full 360-degree panoramic view.",
+      "Satellite imagery": "Images of Earth or other planets captured by satellites, used for mapping, weather forecasting, and more.",
+      "Super-resolution microscopy": "Advanced microscopy techniques that surpass the diffraction limit to reveal finer details of specimens.",
+      "Infrared photography": "Capturing images using infrared light, revealing details not visible to the naked eye.",
+      "Black-and-white film": "Photography using monochromatic film, emphasizing contrast, texture, and composition.",
+      "Vintage film camera": "Classic cameras known for their unique build and photographic characteristics, often used for nostalgic imagery.",
+      "Polaroid/instant camera": "Cameras that produce instant prints, offering a tangible and immediate photographic experience.",
+      "Action camera (e.g., GoPro)": "Compact and durable cameras designed for capturing action and adventure footage.",
+      "Low-light/night photography lens": "Lenses optimized for capturing clear images in low-light or nighttime conditions.",
+      "Portrait lens (e.g., 85mm f/1.4)": "Lenses with focal lengths ideal for capturing flattering portraits with shallow depth of field.",
+      "Large-format camera": "Cameras that use large film or digital sensors, providing high resolution and detail.",
+      "Medium-format camera": "Cameras that use medium-sized film or sensors, balancing quality and portability.",
+      "Smartphone lens simulation": "Lens effects that mimic the capabilities of smartphone cameras, such as wide-angle and macro.",
+      "Cinematic anamorphic lens": "Lenses that provide a wide aspect ratio and distinctive lens flares, used in filmmaking.",
+      "Experimental lens effects (e.g., lens flare, kaleidoscope)": "Creative lens effects that add unique visual elements to images."
+    };
+
+    // Descriptions for Color Schemes
+    const colorSchemeDescriptions = {
+      "Complementary": "A color scheme using colors opposite each other on the color wheel, creating high contrast and vibrant look.",
+      "Analogous": "A color scheme using colors next to each other on the color wheel, providing harmony and pleasing aesthetics.",
+      "Triadic": "A color scheme using three colors evenly spaced around the color wheel, offering balanced and vibrant combinations.",
+      "Tetradic": "A color scheme using four colors arranged into two complementary pairs, providing rich and varied color palettes.",
+      "Split-Complementary": "A color scheme using one base color and two adjacent complementary colors, offering high contrast with less tension.",
+      "Monochromatic": "A color scheme using variations in lightness and saturation of a single color, creating a cohesive and elegant look."
+    };
+
+    /**
+     * Save settings to localStorage
+     */
     function saveSettings() {
       const backgroundPrompt = document.getElementById('backgroundPrompt').value;
       const characterPrompt = document.getElementById('characterPrompt').value;
@@ -916,8 +1058,6 @@
       const seed = document.getElementById('seed').value;
       const imageOptions = document.getElementById('imageOptions').value;
       const style = document.getElementById('style').value;
-      const cameraFeature = document.getElementById('cameraFeatures').value;
-      const color = document.getElementById('colors').value;
 
       // Collect additional character descriptions
       const additionalCharacterDescriptions = [];
@@ -929,6 +1069,12 @@
         }
       });
 
+      // Collect selected camera features
+      const selectedCameraFeatures = Array.from(document.querySelectorAll('#cameraFeaturesToggles button.active')).map(btn => btn.textContent);
+
+      // Collect selected color schemes
+      const selectedColorSchemes = Array.from(document.querySelectorAll('#colorSchemesToggles button.active')).map(btn => btn.textContent);
+
       localStorage.setItem('backgroundPrompt', backgroundPrompt);
       localStorage.setItem('characterPrompt', characterPrompt);
       localStorage.setItem('negativePrompt', negativePrompt);
@@ -938,13 +1084,15 @@
       localStorage.setItem('seed', seed);
       localStorage.setItem('imageOptions', imageOptions);
       localStorage.setItem('style', style);
-      localStorage.setItem('cameraFeature', cameraFeature);
-      localStorage.setItem('color', color);
       localStorage.setItem('autoMode', autoMode);
       localStorage.setItem('additionalCharacterDescriptions', JSON.stringify(additionalCharacterDescriptions));
+      localStorage.setItem('selectedCameraFeatures', JSON.stringify(selectedCameraFeatures));
+      localStorage.setItem('selectedColorSchemes', JSON.stringify(selectedColorSchemes));
     }
 
-    // Load settings from localStorage
+    /**
+     * Load settings from localStorage
+     */
     function loadSettings() {
       const backgroundPrompt = localStorage.getItem('backgroundPrompt');
       const characterPrompt = localStorage.getItem('characterPrompt');
@@ -955,10 +1103,10 @@
       const seed = localStorage.getItem('seed');
       const imageOptions = localStorage.getItem('imageOptions');
       const style = localStorage.getItem('style');
-      const cameraFeature = localStorage.getItem('cameraFeature');
-      const color = localStorage.getItem('color');
       const savedAutoMode = localStorage.getItem('autoMode');
       const additionalCharacterDescriptions = JSON.parse(localStorage.getItem('additionalCharacterDescriptions') || '[]');
+      const selectedCameraFeatures = JSON.parse(localStorage.getItem('selectedCameraFeatures') || '[]');
+      const selectedColorSchemes = JSON.parse(localStorage.getItem('selectedColorSchemes') || '[]');
 
       if (backgroundPrompt) document.getElementById('backgroundPrompt').value = backgroundPrompt;
       if (characterPrompt) document.getElementById('characterPrompt').value = characterPrompt;
@@ -969,154 +1117,199 @@
       if (seed) document.getElementById('seed').value = seed;
       if (imageOptions) document.getElementById('imageOptions').value = imageOptions;
       if (style) document.getElementById('style').value = style;
-      if (cameraFeature) document.getElementById('cameraFeatures').value = cameraFeature;
-      if (color) document.getElementById('colors').value = color;
 
       if (savedAutoMode === 'true') {
         autoMode = true;
         document.getElementById('autoToggleBtn').classList.add('active');
         document.getElementById('autoToggleBtn').innerHTML = '<i class="fas fa-robot"></i> AUTO ON';
+        document.getElementById('autoToggleBtn').setAttribute('aria-pressed', 'true');
       } else {
         autoMode = false;
         document.getElementById('autoToggleBtn').classList.remove('active');
         document.getElementById('autoToggleBtn').innerHTML = '<i class="fas fa-robot"></i> AUTO OFF';
+        document.getElementById('autoToggleBtn').setAttribute('aria-pressed', 'false');
       }
 
       // Load additional character descriptions
       additionalCharacterDescriptions.forEach(desc => {
         addCharacterDescription(desc);
       });
+
+      // Load selected camera features
+      selectedCameraFeatures.forEach(feature => {
+        toggleFeature('cameraFeaturesToggles', feature);
+      });
+
+      // Load selected color schemes
+      selectedColorSchemes.forEach(scheme => {
+        toggleFeature('colorSchemesToggles', scheme);
+      });
+
+      // Update dynamic descriptions
+      updateDynamicDescription();
     }
 
-    // Initial load
+    /**
+     * Initial load and setup
+     */
     document.addEventListener('DOMContentLoaded', () => {
+      populateCameraFeatureToggles();
+      populateColorSchemeToggles();
       loadSettings();
       loadDarkMode();
       setupModal();
       initializeNegativePrompt();
-      loadGeneratedImages();
       loadLibraryImages();
       disableImageDownload();
     });
 
-    // Initialize Negative Prompt with default text if empty
-    function initializeNegativePrompt() {
-      const negativePrompt = document.getElementById('negativePrompt');
-      if (!negativePrompt.value) {
-        negativePrompt.value = "low quality, blurry, bad anatomy, out of focus, noise, duplicate, watermark, text, ugly, messy";
+    /**
+     * Populate Camera Features Toggles
+     */
+    function populateCameraFeatureToggles() {
+      const container = document.getElementById('cameraFeaturesToggles');
+      cameraFeaturesList.forEach(feature => {
+        const btn = document.createElement('button');
+        btn.textContent = feature;
+        btn.setAttribute('aria-pressed', 'false');
+        btn.setAttribute('aria-label', feature);
+        btn.onclick = () => {
+          btn.classList.toggle('active');
+          btn.setAttribute('aria-pressed', btn.classList.contains('active'));
+          updateDynamicDescription();
+          saveSettings();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    /**
+     * Populate Color Schemes Toggles
+     */
+    function populateColorSchemeToggles() {
+      const container = document.getElementById('colorSchemesToggles');
+      colorSchemesList.forEach(scheme => {
+        const btn = document.createElement('button');
+        btn.textContent = scheme;
+        btn.setAttribute('aria-pressed', 'false');
+        btn.setAttribute('aria-label', scheme);
+        btn.onclick = () => {
+          btn.classList.toggle('active');
+          btn.setAttribute('aria-pressed', btn.classList.contains('active'));
+          updateDynamicDescription();
+          saveSettings();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    /**
+     * Toggle feature in a specific toggle group
+     * @param {string} groupId - ID of the toggle group
+     * @param {string} feature - Feature name to toggle
+     */
+    function toggleFeature(groupId, feature) {
+      const container = document.getElementById(groupId);
+      const button = Array.from(container.children).find(btn => btn.textContent === feature);
+      if (button && !button.classList.contains('active')) {
+        button.classList.add('active');
+        button.setAttribute('aria-pressed', 'true');
       }
     }
 
-    // Dark Mode Toggle
+    /**
+     * Update Dynamic Description based on selected toggles
+     */
+    function updateDynamicDescription() {
+      const selectedCameraFeatures = Array.from(document.querySelectorAll('#cameraFeaturesToggles button.active')).map(btn => btn.textContent);
+      const selectedColorSchemes = Array.from(document.querySelectorAll('#colorSchemesToggles button.active')).map(btn => btn.textContent);
+      let description = '';
+
+      if (selectedCameraFeatures.length > 0) {
+        description += `<strong>Camera Features:</strong> ${selectedCameraFeatures.join(', ')}<br>`;
+      }
+
+      if (selectedColorSchemes.length > 0) {
+        description += `<strong>Color Schemes:</strong> ${selectedColorSchemes.join(', ')}<br>`;
+      }
+
+      // Include additional character descriptions
+      const additionalGroups = document.querySelectorAll('.additional-character-group textarea');
+      if (additionalGroups.length > 0) {
+        let additionalDescriptions = [];
+        additionalGroups.forEach(textarea => {
+          const desc = textarea.value.trim();
+          if (desc) {
+            additionalDescriptions.push(desc);
+          }
+        });
+        if (additionalDescriptions.length > 0) {
+          description += `<strong>Additional Character Descriptions:</strong> ${additionalDescriptions.join('; ')}<br>`;
+        }
+      }
+
+      document.getElementById('dynamicDescription').innerHTML = description;
+    }
+
+    /**
+     * Dark Mode Toggle
+     */
     function toggleDarkMode() {
       document.body.classList.toggle('dark-mode');
       const toggleBtn = document.querySelector('.dark-mode-toggle');
       if (document.body.classList.contains('dark-mode')) {
         toggleBtn.innerHTML = '<i class="fas fa-sun"></i> ☀️';
+        toggleBtn.setAttribute('aria-label', 'Perjungti į šviesų režimą');
+        toggleBtn.setAttribute('aria-pressed', 'true');
       } else {
         toggleBtn.innerHTML = '<i class="fas fa-moon"></i> 🌙';
+        toggleBtn.setAttribute('aria-label', 'Perjungti į tamsųjį režimą');
+        toggleBtn.setAttribute('aria-pressed', 'false');
       }
       localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
     }
 
-    // Load Dark Mode settings
+    /**
+     * Load Dark Mode settings
+     */
     function loadDarkMode() {
       const darkMode = localStorage.getItem('darkMode');
       if (darkMode === 'true') {
         document.body.classList.add('dark-mode');
-        document.querySelector('.dark-mode-toggle').innerHTML = '<i class="fas fa-sun"></i> ☀️';
+        const toggleBtn = document.querySelector('.dark-mode-toggle');
+        toggleBtn.innerHTML = '<i class="fas fa-sun"></i> ☀️';
+        toggleBtn.setAttribute('aria-label', 'Perjungti į šviesų režimą');
+        toggleBtn.setAttribute('aria-pressed', 'true');
       } else {
-        document.querySelector('.dark-mode-toggle').innerHTML = '<i class="fas fa-moon"></i> 🌙';
+        const toggleBtn = document.querySelector('.dark-mode-toggle');
+        toggleBtn.innerHTML = '<i class="fas fa-moon"></i> 🌙';
+        toggleBtn.setAttribute('aria-label', 'Perjungti į tamsųjį režimą');
+        toggleBtn.setAttribute('aria-pressed', 'false');
       }
     }
 
-    // Auto Mode Toggle
+    /**
+     * Auto Mode Toggle
+     */
     function toggleAutoMode() {
       autoMode = !autoMode;
       const toggleBtn = document.getElementById('autoToggleBtn');
       if (autoMode) {
         toggleBtn.classList.add('active');
         toggleBtn.innerHTML = '<i class="fas fa-robot"></i> AUTO ON';
+        toggleBtn.setAttribute('aria-pressed', 'true');
       } else {
         toggleBtn.classList.remove('active');
         toggleBtn.innerHTML = '<i class="fas fa-robot"></i> AUTO OFF';
+        toggleBtn.setAttribute('aria-pressed', 'false');
       }
       localStorage.setItem('autoMode', autoMode);
     }
 
-    // Append Style to Prompt
-    function appendStyleToPrompt(prompt, style) {
-      const styleDescriptions = {
-        'Film': `${prompt}, cinematic masterpiece, shot with an anamorphic 35mm lens, ultra-wide aspect ratio, natural film grain, rich and moody cinematic color palette, deep contrast, dynamic range, soft and detailed lighting, natural bokeh, shallow depth of field, evocative storytelling, authentic vintage film aesthetics, timeless Hollywood style`,
-        'Pixel Art': `${prompt}, in classic pixel art style, inspired by retro games like Final Fantasy and Chrono Trigger, 16-bit aesthetic, carefully crafted pixel details, balanced color palette, nostalgic and vibrant tones, smooth shading, and authentic retro charm`,
-        'Anime': `${prompt}, in anime style inspired by classics like Attack on Titan and Demon Slayer, vivid and dynamic compositions, vibrant yet harmonious color schemes, expressive and detailed character designs, dramatic lighting, intricate line work, fluid motion elements, and a cinematic anime atmosphere`,
-        'Realistic': `${prompt}, in hyper-realistic style, photorealistic details, meticulously rendered textures, lifelike proportions, dynamic and natural lighting, realistic depth of field, authentic environments, nuanced color grading, and true-to-life materials`,
-        'Storyboard': `${prompt}, in hand-drawn black-and-white storyboard style, rough pencil sketch aesthetic, emphasizing composition, perspective, and dynamic camera angles, clear character blocking, cinematic framing, sequential flow, and annotations for action and dialogue cues`,
-        'Film Noir': `${prompt}, in classic film noir style, high contrast black-and-white imagery, dramatic chiaroscuro lighting, deep shadows, atmospheric fog, urban backdrops, vintage aesthetics, fedoras and trench coats, suspenseful mood, and intense character expressions`,
-        'Vintage': `${prompt}, in vintage style, muted and earthy color palette, soft film grain, faded textures, timeless composition, delicate vignetting, nostalgic atmosphere, classic typography, and retro-inspired design elements`,
-        'Graphic Design': `${prompt}, in modern graphic design style, clean and balanced layouts, bold typography, striking color palettes, geometric shapes, high contrast, minimalist aesthetics, layered compositions, and visually compelling visuals tailored for branding or digital media`,
-        'Cartoon': `${prompt}, in Cartoon Network-inspired style, bold and dynamic outlines, exaggerated yet balanced proportions, quirky character designs, vibrant and contrasting color palettes, playful and expressive animations, simplified but impactful backgrounds, lighthearted tone, and a touch of surreal humor reminiscent of shows like Adventure Time, The Amazing World of Gumball, and Dexter's Laboratory`,
-        'Watercolor': `${prompt}, in delicate watercolor painting style, soft brush strokes, pastel and muted tones, organic textures, flowing gradients, and a dreamy, artistic atmosphere reminiscent of classic hand-painted illustrations`,
-        'Surrealism': `${prompt}, in surreal style, dreamlike imagery, abstract forms, unconventional compositions, and a blend of reality and imagination, reminiscent of Salvador Dalí's artworks`,
-        'Comics Style': `${prompt}, in vibrant comics style, bold black outlines, dynamic panel compositions, expressive character poses, exaggerated proportions, halftone patterns, action-packed scenes, vibrant primary colors, dramatic speech bubbles, and a storytelling aesthetic reminiscent of Marvel and DC classics`,
-        'Mix': appendMixStyleToPrompt(prompt)
-      };
-      return styleDescriptions[style] || prompt;
-    }
-
-    // Get Random Styles for Mix
-    function getRandomStyles() {
-      const styles = ['Film', 'Pixel Art', 'Anime', 'Realistic', 'Storyboard', 'Film Noir', 'Vintage', 'Graphic Design', 'Cartoon', 'Watercolor', 'Surrealism', 'Comics Style'];
-      let first = styles[Math.floor(Math.random() * styles.length)];
-      let second = styles[Math.floor(Math.random() * styles.length)];
-      while (second === first) {
-        second = styles[Math.floor(Math.random() * styles.length)];
-      }
-      return `${first} and ${second}`;
-    }
-
-    // Append Mix Style to Prompt
-    function appendMixStyleToPrompt(prompt) {
-      const randomStyles = getRandomStyles();
-      return `${prompt}, in ${randomStyles} styles, combining elements from both styles for a unique and engaging image`;
-    }
-
-    // Modal Configuration
-    function setupModal() {
-      const modal = document.getElementById("imageModal");
-      const modalImg = document.getElementById("modalImage");
-      const closeBtn = document.getElementsByClassName("close")[0];
-
-      // Close modal
-      closeBtn.onclick = function() { 
-        modal.style.display = "none";
-      }
-
-      // Close modal when clicking outside the image
-      window.onclick = function(event) {
-        if (event.target == modal) {
-          modal.style.display = "none";
-        }
-      }
-
-      // Open modal on image click (Generator)
-      document.getElementById('generatedImage').addEventListener('click', function(event) {
-        if(event.target.tagName === 'IMG') {
-          modal.style.display = "block";
-          modalImg.src = event.target.src;
-        }
-      });
-
-      // Open modal on image click (Library)
-      document.getElementById('libraryImages').addEventListener('click', function(event) {
-        if(event.target.tagName === 'IMG') {
-          modal.style.display = "block";
-          modalImg.src = event.target.src;
-        }
-      });
-    }
-
-    // Add Additional Character Description
+    /**
+     * Add Additional Character Description
+     * @param {string} description - Optional pre-filled description
+     */
     function addCharacterDescription(description = '') {
       const container = document.getElementById('additionalCharacterDescriptions');
       
@@ -1137,13 +1330,17 @@
       textarea.id = `additionalCharacterPrompt${descriptionCount + 1}`;
       textarea.placeholder = 'Pvz., ilgasis šaknys, puikiai sutvarkyta šviesa...';
       textarea.value = description;
+      textarea.setAttribute('aria-label', `Additional Character Description ${descriptionCount + 1}`);
+      textarea.oninput = updateDynamicDescription;
 
       const removeBtn = document.createElement('button');
       removeBtn.type = 'button';
       removeBtn.textContent = '–'; // Remove button
       removeBtn.title = 'Pašalinti šį aprašymą';
+      removeBtn.setAttribute('aria-label', 'Pašalinti šį aprašymą');
       removeBtn.onclick = () => {
         container.removeChild(newGroup);
+        updateDynamicDescription();
         saveSettings(); // Save changes
       };
 
@@ -1152,23 +1349,37 @@
       newGroup.appendChild(removeBtn);
 
       container.appendChild(newGroup);
+      updateDynamicDescription();
     }
 
-    // Show Library
+    /**
+     * Show Library
+     */
     function showLibrary() {
       document.getElementById('generatorContainer').classList.remove('active');
       document.getElementById('libraryContainer').classList.add('active');
       disableImageDownload(); // Ensure new images have download disabled
     }
 
-    // Show Generator
+    /**
+     * Show Generator
+     */
     function showGenerator() {
       document.getElementById('libraryContainer').classList.remove('active');
       document.getElementById('generatorContainer').classList.add('active');
       disableImageDownload(); // Ensure new images have download disabled
     }
 
-    // Add Image to Library Gallery
+    /**
+     * Add Image to Library Gallery
+     * @param {string} url - Image URL
+     * @param {string} prompt - Image prompt
+     * @param {string} model - Model used
+     * @param {string} width - Image width
+     * @param {string} height - Image height
+     * @param {string|number} seed - Seed used
+     * @param {string} mimeType - Image MIME type
+     */
     function addImageToLibraryGallery(url, prompt, model, width, height, seed, mimeType) {
       const libraryImagesDiv = document.getElementById('libraryImages');
       const imageContainer = document.createElement('div');
@@ -1185,10 +1396,10 @@
       const caption = document.createElement('div');
       caption.classList.add('caption');
       caption.innerHTML = `
-        <strong>Prompt:</strong> ${prompt}<br>
-        <strong>Model:</strong> ${model}<br>
-        <strong>Dimensions:</strong> ${width}px x ${height}px<br>
-        <strong>Seed:</strong> ${seed}
+        <strong>Prompt:</strong> ${sanitizeHTML(prompt)}<br>
+        <strong>Model:</strong> ${sanitizeHTML(model)}<br>
+        <strong>Dimensions:</strong> ${sanitizeHTML(width)}px x ${sanitizeHTML(height)}px<br>
+        <strong>Seed:</strong> ${sanitizeHTML(seed)}
       `;
       imageContainer.appendChild(caption);
 
@@ -1206,9 +1417,10 @@
 
       const downloadBtn = document.createElement('button');
       downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
+      downloadBtn.setAttribute('aria-label', 'Atsisiųsti vaizdą');
       downloadBtn.onclick = () => {
         const format = formatSelect.value;
-        downloadImage(url, `hexacola_image_${seed}.${format}`, format);
+        downloadImage(url, `hexacola_image_${sanitizeFileName(seed)}.${format}`, format);
       };
       downloadOptions.appendChild(downloadBtn);
 
@@ -1217,10 +1429,16 @@
       libraryImagesDiv.appendChild(imageContainer);
     }
 
-    // Download Image in Selected Format
+    /**
+     * Download Image in Selected Format
+     * @param {string} url - Image URL
+     * @param {string} filename - Desired filename
+     * @param {string} format - Image format
+     */
     async function downloadImage(url, filename, format) {
       try {
         const response = await fetch(url);
+        if (!response.ok) throw new Error('Nepavyko atsisiųsti vaizdo.');
         const blob = await response.blob();
         let convertedBlob = blob;
 
@@ -1232,6 +1450,7 @@
           const ctx = canvas.getContext('2d');
           ctx.drawImage(imageBitmap, 0, 0);
           convertedBlob = await new Promise(resolve => canvas.toBlob(resolve, `image/${format}`));
+          if (!convertedBlob) throw new Error('Nepavyko konvertuoti vaizdo formato.');
         }
 
         const a = document.createElement('a');
@@ -1240,13 +1459,36 @@
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        URL.revokeObjectURL(a.href); // Revoke the object URL after download
       } catch (error) {
         console.error('Atsisiuntimo klaida:', error);
         alert('Klaida atsisiunčiant vaizdą. Bandykite dar kartą.');
       }
     }
 
-    // Load Library Images
+    /**
+     * Sanitize HTML to prevent XSS
+     * @param {string} str - Input string
+     * @returns {string} - Sanitized string
+     */
+    function sanitizeHTML(str) {
+      const temp = document.createElement('div');
+      temp.textContent = str;
+      return temp.innerHTML;
+    }
+
+    /**
+     * Sanitize File Name
+     * @param {string|number} seed - Seed used
+     * @returns {string} - Sanitized file name
+     */
+    function sanitizeFileName(seed) {
+      return String(seed).replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    }
+
+    /**
+     * Load Library Images from localStorage
+     */
     function loadLibraryImages() {
       let images = JSON.parse(localStorage.getItem('generatedImages')) || [];
       images.forEach(image => {
@@ -1254,7 +1496,9 @@
       });
     }
 
-    // Clear Library
+    /**
+     * Clear Library
+     */
     function clearLibrary() {
       if (confirm('Ar tikrai norite išvalyti visus vaizdus iš bibliotekos?')) {
         localStorage.removeItem('generatedImages');
@@ -1263,7 +1507,9 @@
       }
     }
 
-    // Generate Image
+    /**
+     * Generate Image
+     */
     async function generateImage() {
       const generateButton = document.querySelector('.generate');
       generateButton.disabled = true; // Disable button during generation
@@ -1272,13 +1518,12 @@
       const characterPrompt = document.getElementById('characterPrompt').value.trim();
       const negativePrompt = document.getElementById('negativePrompt').value.trim();
       const model = document.getElementById('model').value;
-      const width = document.getElementById('width').value;
-      const height = document.getElementById('height').value;
-      const seed = document.getElementById('seed').value;
-      const imageOptions = parseInt(document.getElementById('imageOptions').value);
+      const width = parseInt(document.getElementById('width').value, 10);
+      const height = parseInt(document.getElementById('height').value, 10);
+      const seedInput = document.getElementById('seed').value.trim();
+      const seed = seedInput ? parseInt(seedInput, 10) : null;
+      const imageOptions = parseInt(document.getElementById('imageOptions').value, 10);
       const style = document.getElementById('style').value;
-      const cameraFeature = document.getElementById('cameraFeatures').value;
-      const color = document.getElementById('colors').value;
 
       // Collect additional character descriptions
       const additionalCharacterDescriptions = [];
@@ -1290,6 +1535,12 @@
         }
       });
 
+      // Collect selected camera features
+      const selectedCameraFeatures = Array.from(document.querySelectorAll('#cameraFeaturesToggles button.active')).map(btn => btn.textContent);
+
+      // Collect selected color schemes
+      const selectedColorSchemes = Array.from(document.querySelectorAll('#colorSchemesToggles button.active')).map(btn => btn.textContent);
+
       // Check if no prompts are provided
       const noPrompts = !backgroundPrompt && !characterPrompt && additionalCharacterDescriptions.length === 0;
 
@@ -1300,8 +1551,8 @@
         // Generate both background and character prompts if none provided
         try {
           [backgroundCombinedPrompt, characterCombinedPrompt] = await Promise.all([
-            generateRandomPromptFunction('background', style, cameraFeature, color),
-            generateRandomPromptFunction('character', style, cameraFeature, color)
+            generateRandomPromptFunction('background', style, selectedCameraFeatures, selectedColorSchemes),
+            generateRandomPromptFunction('character', style, selectedCameraFeatures, selectedColorSchemes)
           ]);
           // Assign generated prompts
           document.getElementById('backgroundPrompt').value = backgroundCombinedPrompt;
@@ -1314,12 +1565,8 @@
         }
       } else {
         // If at least one prompt is provided, use them as is
-        if (backgroundPrompt) {
-          backgroundCombinedPrompt = backgroundPrompt;
-        }
-        if (characterPrompt) {
-          characterCombinedPrompt = characterPrompt;
-        }
+        backgroundCombinedPrompt = backgroundPrompt;
+        characterCombinedPrompt = characterPrompt;
       }
 
       // Ensure at least one prompt is present
@@ -1337,19 +1584,19 @@
 
       if (autoMode) {
         try {
-          // Optimize background prompt with style, camera feature, and color
+          // Optimize background prompt with style, camera features, and color schemes
           if (backgroundCombinedPrompt) {
-            optimizedBackgroundPrompt = await optimizePrompt(`Optimize the following background prompt for high-quality image generation in ${style} style with camera feature ${cameraFeature} and color ${color}: "${backgroundCombinedPrompt}"`);
+            optimizedBackgroundPrompt = await optimizePrompt(`Optimize the following background prompt for high-quality image generation in ${style} style with camera features ${selectedCameraFeatures.join(', ')} and color schemes ${selectedColorSchemes.join(', ')}: "${backgroundCombinedPrompt}"`);
           }
 
-          // Optimize character prompt with style, camera feature, and color
+          // Optimize character prompt with style, camera features, and color schemes
           if (characterCombinedPrompt) {
-            optimizedCharacterPrompt = await optimizePrompt(`Optimize the following character prompt for high-quality image generation in ${style} style with camera feature ${cameraFeature} and color ${color}: "${characterCombinedPrompt}"`);
+            optimizedCharacterPrompt = await optimizePrompt(`Optimize the following character prompt for high-quality image generation in ${style} style with camera features ${selectedCameraFeatures.join(', ')} and color schemes ${selectedColorSchemes.join(', ')}: "${characterCombinedPrompt}"`);
           }
 
           // Optimize each additional character description
           for (let i = 0; i < additionalCharacterDescriptions.length; i++) {
-            additionalCharacterDescriptions[i] = await optimizePrompt(`Optimize the following character description to match the ${style} style with camera feature ${cameraFeature} and color ${color}: "${additionalCharacterDescriptions[i]}"`);
+            additionalCharacterDescriptions[i] = await optimizePrompt(`Optimize the following character description to match the ${style} style with camera features ${selectedCameraFeatures.join(', ')} and color schemes ${selectedColorSchemes.join(', ')}: "${additionalCharacterDescriptions[i]}"`);
           }
 
           // Optimize negative prompt
@@ -1371,7 +1618,7 @@
         fullCharacterPrompt += ' Ensure that all characters maintain the same style, face structure, and clothing as described above.';
       }
 
-      // Integrate camera feature and color into the combined prompt
+      // Integrate camera features and color schemes into the combined prompt
       let combinedPrompt = '';
       if (optimizedBackgroundPrompt && fullCharacterPrompt) {
         combinedPrompt = `${optimizedBackgroundPrompt}, ${fullCharacterPrompt}, with correct proportions, good perspective, and excellent composition.`;
@@ -1388,20 +1635,20 @@
         combinedPrompt = appendStyleToPrompt(combinedPrompt, style);
       }
 
-      // Append camera feature and color descriptions at the beginning for top priority
-      if (cameraFeature) {
-        combinedPrompt = `${cameraFeature}, ${combinedPrompt}`;
+      // Append camera features and color schemes descriptions at the beginning for top priority
+      if (selectedCameraFeatures.length > 0) {
+        combinedPrompt = `${selectedCameraFeatures.join(', ')}, ${combinedPrompt}`;
       }
-      if (color) {
-        combinedPrompt = `${color}, ${combinedPrompt}`;
+      if (selectedColorSchemes.length > 0) {
+        combinedPrompt = `${selectedColorSchemes.join(', ')}, ${combinedPrompt}`;
       }
 
       // Create API URL
       let urlBase = `https://image.pollinations.ai/prompt/${encodeURIComponent(combinedPrompt)}?model=${encodeURIComponent(model)}&width=${encodeURIComponent(width)}&height=${encodeURIComponent(height)}&nologo=true`;
 
-      if (negativePrompt) {
-        urlBase += `&negative=${encodeURIComponent(optimizedNegativePrompt)}`;
-      }
+      // Remove 'negative' parameter as it's not part of the API specification
+      // If you have a different method to handle negative prompts, implement it accordingly
+      // For now, we will exclude the negative prompt from the URL
 
       try {
         // Show loading overlay and start timer
@@ -1432,7 +1679,7 @@
         for (let i = 0; i < imageOptions; i++) {
           let uniqueSeed;
           if (seed) {
-            uniqueSeed = parseInt(seed) + i; // Increment seed
+            uniqueSeed = seed + i; // Increment seed
           } else {
             uniqueSeed = Math.floor(Math.random() * 100000); // Random seed
           }
@@ -1466,10 +1713,10 @@
             const caption = document.createElement('div');
             caption.classList.add('caption');
             caption.innerHTML = `
-              <strong>Prompt:</strong> ${combinedPrompt}<br>
-              <strong>Model:</strong> ${model}<br>
-              <strong>Dimensions:</strong> ${width}px x ${height}px<br>
-              <strong>Seed:</strong> ${seed ? uniqueSeed : 'Random'}
+              <strong>Prompt:</strong> ${sanitizeHTML(combinedPrompt)}<br>
+              <strong>Model:</strong> ${sanitizeHTML(model)}<br>
+              <strong>Dimensions:</strong> ${sanitizeHTML(width)}px x ${sanitizeHTML(height)}px<br>
+              <strong>Seed:</strong> ${sanitizeHTML(seed ? uniqueSeed : 'Random')}
             `;
             imageContainer.appendChild(caption);
 
@@ -1487,9 +1734,10 @@
 
             const downloadBtn = document.createElement('button');
             downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
+            downloadBtn.setAttribute('aria-label', 'Atsisiųsti vaizdą');
             downloadBtn.onclick = () => {
               const format = formatSelect.value;
-              downloadImage(imgUrl, `hexacola_image_${seed ? uniqueSeed : index + 1}.${format}`, format);
+              downloadImage(imgUrl, `hexacola_image_${sanitizeFileName(seed ? uniqueSeed : index + 1)}.${format}`, format);
             };
             downloadOptions.appendChild(downloadBtn);
 
@@ -1497,10 +1745,9 @@
 
             generatedImageDiv.appendChild(imageContainer);
 
-            // Save image to localStorage
-            saveImage(imgUrl, combinedPrompt, model, width, height, seed ? uniqueSeed : 'Random', blob.type);
-            // Add to library
-            addImageToLibraryGallery(imgUrl, combinedPrompt, model, width, height, seed ? uniqueSeed : 'Random', blob.type);
+            // Save image to localStorage and add to library
+            saveImage(imgUrl, combinedPrompt, model, width, height, seed ? uniqueSeed : `Random_${Date.now()}`, blob.type);
+            addImageToLibraryGallery(imgUrl, combinedPrompt, model, width, height, seed ? uniqueSeed : `Random_${Date.now()}`, blob.type);
 
             // Update progress bar
             generatedImagesCount++;
@@ -1525,26 +1772,28 @@
       }
     }
 
-    // Download All Library Images
+    /**
+     * Download All Library Images
+     */
     async function downloadAllLibraryImages() {
       const images = document.querySelectorAll('#libraryImages img');
       if (images.length === 0) {
         alert('Nėra vaizdų atsisiuntimui.');
         return;
       }
-      images.forEach((img, index) => {
+      for (let i = 0; i < images.length; i++) {
+        const img = images[i];
         const mimeType = img.dataset.type || 'image/png'; // Default to png if type not found
         const extension = mimeType.split('/')[1] || 'png';
-        const a = document.createElement('a');
-        a.href = img.src;
-        a.download = `hexacola_image_${index + 1}.${extension}`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      });
+        const seed = img.parentElement.querySelector('.caption strong:nth-child(4)').nextSibling.textContent.trim();
+        const filename = `hexacola_image_${sanitizeFileName(seed)}.${extension}`;
+        await downloadImage(img.src, filename, extension);
+      }
     }
 
-    // Update Progress Bar
+    /**
+     * Update Progress Bar
+     */
     function updateProgressBar() {
       const progressBar = document.getElementById('progressOverlayBar');
       const progressPercentage = (generatedImagesCount / totalImages) * 100;
@@ -1554,7 +1803,11 @@
       }
     }
 
-    // Optimize Prompt using Pollinations.AI API
+    /**
+     * Optimize Prompt using Pollinations.AI API
+     * @param {string} prompt - Prompt to optimize
+     * @returns {string} - Optimized prompt
+     */
     async function optimizePrompt(prompt) {
       const response = await fetch('https://text.pollinations.ai/openai', {
         method: 'POST',
@@ -1585,8 +1838,15 @@
       }
     }
 
-    // Generate Random Prompt Function
-    async function generateRandomPromptFunction(target, style, cameraFeature, color) {
+    /**
+     * Generate Random Prompt Function
+     * @param {string} target - 'background' or 'character'
+     * @param {string} style - Selected style
+     * @param {Array} cameraFeatures - Selected camera features
+     * @param {Array} colorSchemes - Selected color schemes
+     * @returns {string} - Generated prompt
+     */
+    async function generateRandomPromptFunction(target, style, cameraFeatures, colorSchemes) {
       let basePrompt = '';
       if (target === 'background') {
         basePrompt = 'Generate a creative and detailed description for a background of an AI-generated image that is unique and visually appealing. Ensure it is suitable for a high-quality image generation with appropriate style adaptations.';
@@ -1596,13 +1856,13 @@
         throw new Error('Invalid target for prompt generation.');
       }
 
-      // Integrate camera feature and color for top priority
+      // Integrate camera features and color schemes for top priority
       let enhancedPrompt = '';
-      if (cameraFeature) {
-        enhancedPrompt += `${cameraFeature}, `;
+      if (cameraFeatures.length > 0) {
+        enhancedPrompt += `${cameraFeatures.join(', ')}, `;
       }
-      if (color) {
-        enhancedPrompt += `${color}, `;
+      if (colorSchemes.length > 0) {
+        enhancedPrompt += `${colorSchemes.join(', ')}, `;
       }
       enhancedPrompt += basePrompt;
 
@@ -1642,16 +1902,19 @@
       }
     }
 
-    // Generate Random Prompt
+    /**
+     * Generate Random Prompt
+     * @param {string} target - 'background' or 'character'
+     */
     async function generateRandomPrompt(target) {
       const style = document.getElementById('style').value;
-      const cameraFeature = document.getElementById('cameraFeatures').value;
-      const color = document.getElementById('colors').value;
+      const selectedCameraFeatures = Array.from(document.querySelectorAll('#cameraFeaturesToggles button.active')).map(btn => btn.textContent);
+      const selectedColorSchemes = Array.from(document.querySelectorAll('#colorSchemesToggles button.active')).map(btn => btn.textContent);
       const generateButtons = document.querySelectorAll('.generate-prompt');
       generateButtons.forEach(button => button.disabled = true); // Disable all prompt buttons during generation
 
       try {
-        const prompt = await generateRandomPromptFunction(target, style, cameraFeature, color);
+        const prompt = await generateRandomPromptFunction(target, style, selectedCameraFeatures, selectedColorSchemes);
         if (target === 'background') {
           document.getElementById('backgroundPrompt').value = prompt;
         } else if (target === 'character') {
@@ -1666,7 +1929,180 @@
       }
     }
 
-    // Chat Functionality
+    /**
+     * Append Style to Prompt
+     * @param {string} prompt - Original prompt
+     * @param {string} style - Selected style
+     * @returns {string} - Prompt with appended style
+     */
+    function appendStyleToPrompt(prompt, style) {
+      const styleDescriptions = {
+        'Film': `${prompt}, cinematic masterpiece, shot with an anamorphic 35mm lens, ultra-wide aspect ratio, natural film grain, rich and moody cinematic color palette, deep contrast, dynamic range, soft and detailed lighting, natural bokeh, shallow depth of field, evocative storytelling, authentic vintage film aesthetics, timeless Hollywood style`,
+        'Pixel Art': `${prompt}, in classic pixel art style, inspired by retro games like Final Fantasy and Chrono Trigger, 16-bit aesthetic, carefully crafted pixel details, balanced color palette, nostalgic and vibrant tones, smooth shading, and authentic retro charm`,
+        'Anime': `${prompt}, in anime style inspired by classics like Attack on Titan and Demon Slayer, vivid and dynamic compositions, vibrant yet harmonious color schemes, expressive and detailed character designs, dramatic lighting, intricate line work, fluid motion elements, and a cinematic anime atmosphere`,
+        'Realistic': `${prompt}, in hyper-realistic style, photorealistic details, meticulously rendered textures, lifelike proportions, dynamic and natural lighting, realistic depth of field, authentic environments, nuanced color grading, and true-to-life materials`,
+        'Storyboard': `${prompt}, in hand-drawn black-and-white storyboard style, rough pencil sketch aesthetic, emphasizing composition, perspective, and dynamic camera angles, clear character blocking, cinematic framing, sequential flow, and annotations for action and dialogue cues`,
+        'Film Noir': `${prompt}, in classic film noir style, high contrast black-and-white imagery, dramatic chiaroscuro lighting, deep shadows, atmospheric fog, urban backdrops, vintage aesthetics, fedoras and trench coats, suspenseful mood, and intense character expressions`,
+        'Vintage': `${prompt}, in vintage style, muted and earthy color palette, soft film grain, faded textures, timeless composition, delicate vignetting, nostalgic atmosphere, classic typography, and retro-inspired design elements`,
+        'Graphic Design': `${prompt}, in modern graphic design style, clean and balanced layouts, bold typography, striking color palettes, geometric shapes, high contrast, minimalist aesthetics, layered compositions, and visually compelling visuals tailored for branding or digital media`,
+        'Cartoon': `${prompt}, in Cartoon Network-inspired style, bold and dynamic outlines, exaggerated yet balanced proportions, quirky character designs, vibrant and contrasting color palettes, playful and expressive animations, simplified but impactful backgrounds, lighthearted tone, and a touch of surreal humor reminiscent of shows like Adventure Time, The Amazing World of Gumball, and Dexter's Laboratory`,
+        'Watercolor': `${prompt}, in delicate watercolor painting style, soft brush strokes, pastel and muted tones, organic textures, flowing gradients, and a dreamy, artistic atmosphere reminiscent of classic hand-painted illustrations`,
+        'Surrealism': `${prompt}, in surreal style, dreamlike imagery, abstract forms, unconventional compositions, and a blend of reality and imagination, reminiscent of Salvador Dalí's artworks`,
+        'Comics Style': `${prompt}, in vibrant comics style, bold black outlines, dynamic panel compositions, expressive character poses, exaggerated proportions, halftone patterns, action-packed scenes, vibrant primary colors, dramatic speech bubbles, and a storytelling aesthetic reminiscent of Marvel and DC classics`,
+        'Mix': appendMixStyleToPrompt(prompt)
+      };
+      return styleDescriptions[style] || prompt;
+    }
+
+    /**
+     * Get Random Styles for Mix
+     * @returns {string} - Two different random styles
+     */
+    function getRandomStyles() {
+      const styles = ['Film', 'Pixel Art', 'Anime', 'Realistic', 'Storyboard', 'Film Noir', 'Vintage', 'Graphic Design', 'Cartoon', 'Watercolor', 'Surrealism', 'Comics Style'];
+      let first = styles[Math.floor(Math.random() * styles.length)];
+      let second = styles[Math.floor(Math.random() * styles.length)];
+      while (second === first) {
+        second = styles[Math.floor(Math.random() * styles.length)];
+      }
+      return `${first} and ${second}`;
+    }
+
+    /**
+     * Append Mix Style to Prompt
+     * @param {string} prompt - Original prompt
+     * @returns {string} - Prompt with mixed styles
+     */
+    function appendMixStyleToPrompt(prompt) {
+      const randomStyles = getRandomStyles();
+      return `${prompt}, in ${randomStyles} styles, combining elements from both styles for a unique and engaging image`;
+    }
+
+    /**
+     * Modal Configuration
+     */
+    function setupModal() {
+      const modal = document.getElementById("imageModal");
+      const modalImg = document.getElementById("modalImage");
+      const closeBtn = document.getElementsByClassName("close")[0];
+
+      // Close modal
+      closeBtn.onclick = function() { 
+        modal.style.display = "none";
+      }
+
+      // Close modal when clicking outside the image
+      window.onclick = function(event) {
+        if (event.target == modal) {
+          modal.style.display = "none";
+        }
+      }
+
+      // Open modal on image click (Generator)
+      document.getElementById('generatedImage').addEventListener('click', function(event) {
+        if(event.target.tagName === 'IMG') {
+          modal.style.display = "block";
+          modalImg.src = event.target.src;
+        }
+      });
+
+      // Open modal on image click (Library)
+      document.getElementById('libraryImages').addEventListener('click', function(event) {
+        if(event.target.tagName === 'IMG') {
+          modal.style.display = "block";
+          modalImg.src = event.target.src;
+        }
+      });
+    }
+
+    /**
+     * Save Image to localStorage
+     * @param {string} url - Image URL
+     * @param {string} prompt - Image prompt
+     * @param {string} model - Model used
+     * @param {string} width - Image width
+     * @param {string} height - Image height
+     * @param {string|number} seed - Seed used
+     * @param {string} mimeType - Image MIME type
+     */
+    function saveImage(url, prompt, model, width, height, seed, mimeType) {
+      let images = JSON.parse(localStorage.getItem('generatedImages')) || [];
+      images.push({ url, prompt, model, width, height, seed, mimeType });
+      localStorage.setItem('generatedImages', JSON.stringify(images));
+    }
+
+    /**
+     * Load Generated Images from localStorage
+     */
+    function loadGeneratedImages() {
+      let images = JSON.parse(localStorage.getItem('generatedImages')) || [];
+      images.forEach(image => {
+        addImageToGallery(image.url, image.prompt, image.model, image.width, image.height, image.seed, image.mimeType);
+      });
+    }
+
+    /**
+     * Add Image to Gallery
+     * @param {string} url - Image URL
+     * @param {string} prompt - Image prompt
+     * @param {string} model - Model used
+     * @param {string} width - Image width
+     * @param {string} height - Image height
+     * @param {string|number} seed - Seed used
+     * @param {string} mimeType - Image MIME type
+     */
+    function addImageToGallery(url, prompt, model, width, height, seed, mimeType) {
+      const generatedImageDiv = document.getElementById('generatedImage');
+      const imageContainer = document.createElement('div');
+      imageContainer.classList.add('image-container');
+
+      const imgElement = document.createElement('img');
+      imgElement.src = url;
+      imgElement.alt = 'Sugeneruotas vaizdas';
+      imgElement.title = 'Spauskite norėdami padidinti';
+      imgElement.dataset.type = mimeType; // Store MIME type for correct file extension
+      imageContainer.appendChild(imgElement);
+
+      // Add caption
+      const caption = document.createElement('div');
+      caption.classList.add('caption');
+      caption.innerHTML = `
+        <strong>Prompt:</strong> ${sanitizeHTML(prompt)}<br>
+        <strong>Model:</strong> ${sanitizeHTML(model)}<br>
+        <strong>Dimensions:</strong> ${sanitizeHTML(width)}px x ${sanitizeHTML(height)}px<br>
+        <strong>Seed:</strong> ${sanitizeHTML(seed)}
+      `;
+      imageContainer.appendChild(caption);
+
+      // Add download options
+      const downloadOptions = document.createElement('div');
+      downloadOptions.classList.add('download-options');
+
+      const formatSelect = document.createElement('select');
+      formatSelect.innerHTML = `
+        <option value="png">PNG</option>
+        <option value="jpg">JPG</option>
+        <option value="webp">WEBP</option>
+      `;
+      downloadOptions.appendChild(formatSelect);
+
+      const downloadBtn = document.createElement('button');
+      downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
+      downloadBtn.setAttribute('aria-label', 'Atsisiųsti vaizdą');
+      downloadBtn.onclick = () => {
+        const format = formatSelect.value;
+        downloadImage(url, `hexacola_image_${sanitizeFileName(seed)}.${format}`, format);
+      };
+      downloadOptions.appendChild(downloadBtn);
+
+      imageContainer.appendChild(downloadOptions);
+
+      generatedImageDiv.appendChild(imageContainer);
+    }
+
+    /**
+     * Chat Functionality
+     */
     async function sendMessage() {
       const chatInput = document.getElementById('chatInput');
       const message = chatInput.value.trim();
@@ -1709,7 +2145,11 @@
       }
     }
 
-    // Append Message to Chat
+    /**
+     * Append Message to Chat
+     * @param {string} role - 'user' or 'assistant'
+     * @param {string} content - Message content
+     */
     function appendMessage(role, content) {
       const chat = document.getElementById('chat');
       const messageDiv = document.createElement('div');
@@ -1719,249 +2159,9 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
-    // Save Image to localStorage
-    function saveImage(url, prompt, model, width, height, seed, mimeType) {
-      let images = JSON.parse(localStorage.getItem('generatedImages')) || [];
-      images.push({ url, prompt, model, width, height, seed, mimeType });
-      localStorage.setItem('generatedImages', JSON.stringify(images));
-    }
-
-    // Load Generated Images
-    function loadGeneratedImages() {
-      let images = JSON.parse(localStorage.getItem('generatedImages')) || [];
-      images.forEach(image => {
-        addImageToGallery(image.url, image.prompt, image.model, image.width, image.height, image.seed, image.mimeType);
-      });
-    }
-
-    // Add Image to Gallery
-    function addImageToGallery(url, prompt, model, width, height, seed, mimeType) {
-      const generatedImageDiv = document.getElementById('generatedImage');
-      const imageContainer = document.createElement('div');
-      imageContainer.classList.add('image-container');
-
-      const imgElement = document.createElement('img');
-      imgElement.src = url;
-      imgElement.alt = 'Sugeneruotas vaizdas';
-      imgElement.title = 'Spauskite norėdami padidinti';
-      imgElement.dataset.type = mimeType; // Store MIME type for correct file extension
-      imageContainer.appendChild(imgElement);
-
-      // Add caption
-      const caption = document.createElement('div');
-      caption.classList.add('caption');
-      caption.innerHTML = `
-        <strong>Prompt:</strong> ${prompt}<br>
-        <strong>Model:</strong> ${model}<br>
-        <strong>Dimensions:</strong> ${width}px x ${height}px<br>
-        <strong>Seed:</strong> ${seed}
-      `;
-      imageContainer.appendChild(caption);
-
-      // Add download options
-      const downloadOptions = document.createElement('div');
-      downloadOptions.classList.add('download-options');
-
-      const formatSelect = document.createElement('select');
-      formatSelect.innerHTML = `
-        <option value="png">PNG</option>
-        <option value="jpg">JPG</option>
-        <option value="webp">WEBP</option>
-      `;
-      downloadOptions.appendChild(formatSelect);
-
-      const downloadBtn = document.createElement('button');
-      downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
-      downloadBtn.onclick = () => {
-        const format = formatSelect.value;
-        downloadImage(url, `hexacola_image_${seed}.${format}`, format);
-      };
-      downloadOptions.appendChild(downloadBtn);
-
-      imageContainer.appendChild(downloadOptions);
-
-      generatedImageDiv.appendChild(imageContainer);
-    }
-
-    // Add Camera Feature Description
-    function showCameraFeature() {
-      var feature = document.getElementById("cameraFeatures").value;
-      var description = "";
-      switch(feature) {
-          case "360 Panorama":
-              description = "A camera feature that allows capturing a full 360-degree panoramic view.";
-              break;
-          case "DSLR":
-              description = "Digital Single-Lens Reflex cameras are known for their versatility, high image quality, and interchangeable lenses.";
-              break;
-          case "Electron Microscope":
-              description = "A powerful imaging tool that uses electrons to achieve much higher magnifications than optical microscopes.";
-              break;
-          case "Macro Lens":
-              description = "A lens designed for extreme close-up photography, allowing you to capture fine details of small subjects.";
-              break;
-          case "Magnification":
-              description = "The ability of a lens to enlarge the appearance of objects, essential for detailed close-up photography.";
-              break;
-          case "Microscopy":
-              description = "The technique of using microscopes to view small objects and organisms that are not visible to the naked eye.";
-              break;
-          case "Miniature Faking":
-              description = "A technique that uses selective focus and perspective to make real-life scenes appear miniature.";
-              break;
-          case "Panorama":
-              description = "A wide-angle view or representation of a physical space, capturing expansive scenes in a single image.";
-              break;
-          case "Pinhole Lens":
-              description = "A simple lens without glass, using a tiny aperture to create images with unique depth and focus characteristics.";
-              break;
-          case "Satellite Imagery":
-              description = "Images of Earth or other planets captured by satellites, used for mapping, weather forecasting, and more.";
-              break;
-          case "Super Resolution Microscopy":
-              description = "Advanced microscopy techniques that surpass the diffraction limit to reveal finer details of specimens.";
-              break;
-          case "Telephoto Lens":
-              description = "A lens with a long focal length that allows photographers to capture distant subjects with magnification.";
-              break;
-          case "Telescope Lens":
-              description = "Optical lenses designed for telescopes to observe distant celestial objects with clarity.";
-              break;
-          case "Ultra Wide Angle Lens":
-              description = "A lens with an extremely wide field of view, ideal for capturing expansive landscapes and architecture.";
-              break;
-          case "Wide Angle Lens":
-              description = "A lens with a shorter focal length that captures a wider field of view than standard lenses.";
-              break;
-          default:
-              description = "";
-      }
-      document.getElementById("cameraFeatureDescription").innerHTML = description;
-    }
-
-    // Add Color Description
-    function showColor() {
-      var color = document.getElementById("colors").value;
-      var description = "";
-      switch(color) {
-          case "Baby Blue Color":
-              description = "A soft, pale blue shade often associated with serenity and calmness.";
-              break;
-          case "Baby Pink Color":
-              description = "A gentle, light pink hue that conveys sweetness and tenderness.";
-              break;
-          case "Beige":
-              description = "A light brownish-yellow color that is neutral and versatile.";
-              break;
-          case "Blue":
-              description = "A primary color representing trust, loyalty, and wisdom.";
-              break;
-          case "Brown Color":
-              description = "A rich, earthy tone that symbolizes stability and reliability.";
-              break;
-          case "Citrus":
-              description = "A vibrant, zesty color inspired by citrus fruits, evoking energy and freshness.";
-              break;
-          case "Coquelicot Color":
-              description = "A bright red poppy flower color, vibrant and eye-catching.";
-              break;
-          case "Cyan":
-              description = "A greenish-blue color, often associated with clarity and calm.";
-              break;
-          case "CYMK":
-              description = "A color model used in color printing, consisting of Cyan, Magenta, Yellow, and Key (Black).";
-              break;
-          case "Gold Color":
-              description = "A rich, metallic yellow hue that signifies luxury and success.";
-              break;
-          case "Gray":
-              description = "A neutral color between black and white, representing balance and sophistication.";
-              break;
-          case "Grayscale Color":
-              description = "A range of shades of gray without any color, used in monochromatic designs.";
-              break;
-          case "Green":
-              description = "A color that symbolizes nature, growth, and harmony.";
-              break;
-          case "Hot Pink Color":
-              description = "A vivid pink shade that is bold and energetic.";
-              break;
-          case "Indigo":
-              description = "A deep blue-purple color, often associated with intuition and perception.";
-              break;
-          case "Lavender Color":
-              description = "A light purple hue that conveys grace, elegance, and tranquility.";
-              break;
-          case "Magenta":
-              description = "A vibrant purplish-red color that is bold and striking.";
-              break;
-          case "Matte Black Color":
-              description = "A non-reflective black shade that exudes modernity and sleekness.";
-              break;
-          case "Mint Color":
-              description = "A fresh, light greenish-blue color that feels cool and soothing.";
-              break;
-          case "Navy Blue":
-              description = "A dark blue color that represents authority, trust, and professionalism.";
-              break;
-          case "Neon Blue Color":
-              description = "A bright, electric blue shade that stands out and grabs attention.";
-              break;
-          case "Neon Green Color":
-              description = "A luminous green hue that is bold and eye-catching.";
-              break;
-          case "Neon Orange Color":
-              description = "A bright, fluorescent orange color that is energetic and vibrant.";
-              break;
-          case "Neon Purple Color":
-              description = "A striking, luminous purple shade that is both bold and playful.";
-              break;
-          case "Neon Red Color":
-              description = "A bright, fluorescent red color that is intense and attention-grabbing.";
-              break;
-          case "Neon Yellow Color":
-              description = "A vivid, glowing yellow hue that is lively and cheerful.";
-              break;
-          case "Orange":
-              description = "A warm, vibrant color that combines the energy of red and the happiness of yellow.";
-              break;
-          case "Pink":
-              description = "A soft and delicate color associated with love and compassion.";
-              break;
-          case "Red":
-              description = "A strong, passionate color that signifies energy, strength, and determination.";
-              break;
-          case "RGB":
-              description = "A color model based on red, green, and blue light, used primarily in digital displays.";
-              break;
-          case "Silver Color":
-              description = "A shiny, metallic gray color that symbolizes modernity and sophistication.";
-              break;
-          case "Teal":
-              description = "A medium to deep blue-green color that is calming and refreshing.";
-              break;
-          case "Turquoise":
-              description = "A blue-green color that evokes tropical waters and tranquility.";
-              break;
-          case "Vermillion":
-              description = "A brilliant red or scarlet pigment that is vivid and intense.";
-              break;
-          case "Violet":
-              description = "A deep purple color associated with creativity and luxury.";
-              break;
-          case "White":
-              description = "A pure color representing simplicity, cleanliness, and innocence.";
-              break;
-          case "Yellow":
-              description = "A bright and cheerful color that represents happiness and positivity.";
-              break;
-          default:
-              description = "";
-      }
-      document.getElementById("colorDescription").innerHTML = description;
-    }
-
-    // Prevent Image Download and Right-Click
+    /**
+     * Disable Right-Click and Dragging on Images
+     */
     function disableImageDownload() {
       const images = document.querySelectorAll('.generated-image img, .library-container img');
       images.forEach(img => {
@@ -1974,6 +2174,41 @@
     document.addEventListener('DOMContentLoaded', () => {
       disableImageDownload();
     });
+
+    /**
+     * Toggle feature in a specific toggle group
+     * @param {string} groupId - ID of the toggle group
+     * @param {string} feature - Feature name to toggle
+     */
+    function toggleFeature(groupId, feature) {
+      const container = document.getElementById(groupId);
+      const button = Array.from(container.children).find(btn => btn.textContent === feature);
+      if (button && !button.classList.contains('active')) {
+        button.classList.add('active');
+        button.setAttribute('aria-pressed', 'true');
+      }
+    }
+
+    /**
+     * Initialize Negative Prompt with default text if empty
+     */
+    function initializeNegativePrompt() {
+      const negativePrompt = document.getElementById('negativePrompt');
+      if (!negativePrompt.value) {
+        negativePrompt.value = "low quality, blurry, bad anatomy, out of focus, noise, duplicate, watermark, text, ugly, messy";
+      }
+    }
+
+    /**
+     * Sanitize HTML to prevent XSS
+     * @param {string} str - Input string
+     * @returns {string} - Sanitized string
+     */
+    function sanitizeHTML(str) {
+      const temp = document.createElement('div');
+      temp.textContent = str;
+      return temp.innerHTML;
+    }
   </script>
 </body>
 </html>
