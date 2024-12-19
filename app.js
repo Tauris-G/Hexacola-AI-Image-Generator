@@ -358,14 +358,14 @@ function addCharacterDescription(description = '') {
   newGroup.classList.add('input-group', 'additional-character-group');
 
   const label = document.createElement('label');
-  label.textContent = `Additional Character Description ${descriptionCount + 1}:`;
+  label.textContent = `Papildomas personažo aprašymas ${descriptionCount + 1}:`;
   label.setAttribute('for', `additionalCharacterPrompt${descriptionCount + 1}`);
 
   const textarea = document.createElement('textarea');
   textarea.id = `additionalCharacterPrompt${descriptionCount + 1}`;
-  textarea.placeholder = 'Pvz., ilgasis šaknys, puikiai sutvarkyta šviesa...';
+  textarea.placeholder = 'Pvz., juodi plaukai, mėlynos akys, dėvintis raudoną šaliką ir baltus marškinėlius.';
   textarea.value = description;
-  textarea.setAttribute('aria-label', `Additional Character Description ${descriptionCount + 1}`);
+  textarea.setAttribute('aria-label', `Papildomas personažo aprašymas ${descriptionCount + 1}`);
   textarea.oninput = updateDynamicDescription;
 
   const removeBtn = document.createElement('button');
