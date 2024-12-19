@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Hexacola AI Image Generator with Enhanced Features</title>
+  <title>Hexacola AI</title>
   <!-- Font Awesome for Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
   <!-- Google Fonts for Modern Font -->
@@ -15,7 +15,7 @@
   <div class="main-wrapper">
     <!-- Sidebar for Chat and Prompt Generators -->
     <aside class="sidebar" aria-label="Sidebar Navigation">
-      <h2>AI Prompt Generator</h2>
+      <h2>Inspiracijai</h2>
       <div class="input-group">
         <label>Generuoti Aprašymą:</label>
         <button class="generate-prompt tooltip" onclick="generateRandomPrompt('background')" aria-label="Generuoti aprašymą į foną">
@@ -30,12 +30,12 @@
       <!-- Library Button -->
       <div class="input-group">
         <button class="library-button tooltip" onclick="showLibrary()" aria-label="Atidaryti biblioteką">
-          <i class="fas fa-images"></i> LIBRARY
+          <i class="fas fa-images"></i> Biblioteka
           <span class="tooltiptext">Peržiūrėti sugeneruotus vaizdus</span>
         </button>
       </div>
       <!-- Chat Interface -->
-      <h2>Hexacola Chat</h2>
+      <h2>Hexacola Chat GPT</h2>
       <div class="chat" id="chat" role="log" aria-live="polite">
         <!-- Chat messages will appear here -->
       </div>
@@ -50,23 +50,23 @@
     <!-- Main Container for Image Generation and Enhanced Features -->
     <main class="container active" id="generatorContainer" aria-label="Image Generator">
       <div class="header">
-        <h1>Hexacola AI Image Generator</h1>
+        <h1>HEXACOLA</h1>
       </div>
       <!-- Prompts Section -->
       <div class="input-group">
-        <label for="backgroundPrompt">Background Description:</label>
-        <textarea id="backgroundPrompt" placeholder="Pvz., Saulėlydis kalnuose, ramus ežeras..." aria-label="Fono aprašymas"></textarea>
+        <label for="backgroundPrompt">Fono aprašymas:</label>
+        <textarea id="backgroundPrompt" placeholder="Pvz., Saulėlydis kalnuose, žalias italijos ežeras..." aria-label="Fono aprašymas"></textarea>
       </div>
       <div class="input-group">
-        <label for="characterPrompt">Character Description:</label>
-        <textarea id="characterPrompt" placeholder="Pvz., Jaunas riteris su sidabru kruopelė..." aria-label="Personažo aprašymas"></textarea>
+        <label for="characterPrompt">Personažo aprašymas:</label>
+        <textarea id="characterPrompt" placeholder="Pvz., Jaunas riteris su angelo sparnais..." aria-label="Personažo aprašymas"></textarea>
         <button type="button" id="addCharacterBtn" onclick="addCharacterDescription()" title="Pridėti papildomą personažo aprašymą" aria-label="Pridėti papildomą personažo aprašymą">+</button>
       </div>
       <div id="additionalCharacterDescriptions">
         <!-- Additional character descriptions will appear here -->
       </div>
       <div class="input-group">
-        <label for="negativePrompt">Negative Prompt:</label>
+        <label for="negativePrompt">Negatyvus aprašymas:</label>
         <textarea id="negativePrompt" placeholder="Nenoriu logotipo, iškraipyto stiliaus..." aria-label="Neigiamas aprašymas"></textarea>
       </div>
       
@@ -74,14 +74,14 @@
       <div class="toggles" aria-label="Feature Toggles">
         <!-- Camera Features Toggle Group -->
         <div class="toggle-group">
-          <label>Camera Features:</label>
+          <label>Kamera:</label>
           <div class="toggle-buttons" id="cameraFeaturesToggles" role="group" aria-label="Camera Features Toggles">
             <!-- Dynamically populated toggle buttons for camera features -->
           </div>
         </div>
         <!-- Color Schemes Toggle Group -->
         <div class="toggle-group">
-          <label>Color Schemes:</label>
+          <label>Spalvu schemos:</label>
           <div class="toggle-buttons" id="colorSchemesToggles" role="group" aria-label="Color Schemes Toggles">
             <!-- Dynamically populated toggle buttons for color schemes -->
           </div>
@@ -98,15 +98,15 @@
         <div class="option">
           <label for="model">Modelis:</label>
           <select id="model" aria-label="Pasirinkti modelį">
-            <option value="flux" selected>Flux</option>
-            <option value="flux-anime">Flux-Anime</option>
-            <option value="flux-3d">Flux-3D</option>
-            <option value="flux-pro">Flux-Pro</option>
-            <option value="flux-realism">Flux-Realism</option>
-            <option value="flux-cablyal">Flux-CablyAl</option>
-            <option value="any-dark">Any-Dark</option>
-            <option value="turbo">Turbo</option>
-            <option value="Unity">Unity</option>
+            <option value="flux" selected>Pagrindinis</option>
+            <option value="flux-anime">Anime</option>
+            <option value="flux-3d">3D</option>
+            <option value="flux-pro">Pažangus</option>
+            <option value="flux-realism">Realizmas</option>
+            <option value="flux-cablyal">Detalus</option>
+            <option value="any-dark">Tamsus</option>
+            <option value="turbo">Greitas</option>
+            <option value="Unity">Pašėlęs</option>
           </select>
         </div>
         <div class="option">
@@ -122,7 +122,7 @@
           <input type="number" id="seed" placeholder="Palikite tuščią..." aria-label="Nustatyti sėklą" />
         </div>
         <div class="option">
-          <label for="imageOptions">Kiek paveikslėlių:</label>
+          <label for="imageOptions">Kiek paveikslėlių (max 10):</label>
           <input type="number" id="imageOptions" value="1" min="1" max="10" aria-label="Nustatyti paveikslėlių kiekį" />
         </div>
         <div class="option">
@@ -183,7 +183,7 @@
 
     <!-- Library Container -->
     <section class="library-container" id="libraryContainer" aria-label="Biblioteka">
-      <h2>Library</h2>
+      <h2>Biblioteka</h2>
       <div class="generated-image" id="libraryImages" aria-label="Bibliotekos vaizdai">
         <!-- Saved images will appear here -->
       </div>
@@ -214,11 +214,10 @@
   <footer>
     <p>
       API dokumentacija:
-      <a href="https://github.com/pollinations/pollinations/blob/master/APIDOCS.md" target="_blank">Pollinations.AI GitHub</a>
+      <a href="https://github.com/pollinations/pollinations/blob/master/APIDOCS.md" target="_blank">Pollinations.AI</a>
     </p>
     <p>
-      Sukurta su ❤️ naudojant
-      <a href="https://pollinations.ai/" target="_blank">Pollinations.AI</a>.
+      &copy; 2024 Hexacola – Tauris
     </p>
   </footer>
 
