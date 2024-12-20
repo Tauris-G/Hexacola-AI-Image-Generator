@@ -201,52 +201,6 @@
       const locValue = document.getElementById(`location-${frameNumber}`)?.value.trim() || "";
       const framePlot = storyOutline[frameNumber - 1] || "This frame continues the story logically.";
 
-      // Negative prompt instrukcijos:
-      // Reikalaujama išlaikyti gerą perspektyvą, kompoziciją, proporcijas.
-      // Neigiamas promptas: "low quality, blurry, disfigured, extra limbs, watermark, text overlay, ugly, incorrect perspective, disproportionate"
-      const promptForAPI = `
-      You are a helpful AI assistant. Return strictly valid JSON with EXACT keys: "emotion","characters","location","camera","action","prompt","narration".
-      No extra keys, no code blocks.
-      Scenario: "${scenario}"
-      Global: Characters="${globalCharacters}", Location="${globalLocation}"
-      Frame ${frameNumber} outline: "${framePlot}"
-      Style: "${style}"
-
-      Additional requirements:
-      - Maintain correct perspective, composition, and proportions in the scene.
-      - Negative prompt (things that must NOT appear): "low quality, blurry, disfigured, extra limbs, watermark, text overlay, ugly, incorrect perspective, disproportionate".
-      - The image should be high-quality, with proper perspective and proportion.
-
-      Requirements:
-      - "emotion": string
-      - "characters": string 
-      - "location": string
-      - "camera": string
-      - "action": string
-      - "prompt": string (include style, ensure correct composition, no negative elements)
-      - "narration": string (short line describing the scene or dialogue)
-      
-      Each frame differs in emotion, action, camera. Narration fits the scene.
-      `;
-
-      return await callOpenAIAPI(promptForAPI);
-    }
-
-    async function generateFrameWithNarration(frameNumber) {
-      // Ši funkcija analogiška generateAutoFrameDetails, bet skambiname ją iš autoGenerateFrameDetailsForAll
-      // arba galite generuoti tiesiogiai iš čia. Tai vienoda logika, galima sujungti, bet paliekame taip pat aiškumo sumetimais.
-      const scenario = document.getElementById('scenarioInput').value.trim();
-      const style = document.getElementById('styleSelection').value;
-      if(!scenario) return null;
-
-      const emotion = document.getElementById(`emotion-${frameNumber}`)?.value.trim() || "neutral";
-      const cameraValue = document.getElementById(`camera-${frameNumber}`)?.value || "";
-      const charsValue = document.getElementById(`characters-${frameNumber}`)?.value.trim() || "";
-      const locValue = document.getElementById(`location-${frameNumber}`)?.value.trim() || "";
-      const framePlot = storyOutline[frameNumber - 1] || "This frame continues the story logically.";
-
-      // Tokia pati logika kaip generateAutoFrameDetails, nes mes jau integravome narration ir negative prompt instructions ten
-      // Naudosime tą patį promptą
       const promptForAPI = `
       You are a helpful AI assistant. Return strictly valid JSON with EXACT keys: "emotion","characters","location","camera","action","prompt","narration".
       No extra keys, no code blocks.
@@ -258,7 +212,46 @@
       Additional requirements:
       - Maintain correct perspective, composition, and proportions.
       - Negative prompt: "low quality, blurry, disfigured, extra limbs, watermark, text overlay, ugly, incorrect perspective, disproportionate".
-      - The image should be high-quality and well-composed.
+      - The image should be high-quality, stylized as chosen, with correct proportions and no negative elements.
+
+      Requirements:
+      - "emotion": string
+      - "characters": string 
+      - "location": string
+      - "camera": string
+      - "action": string
+      - "prompt": string (include style and ensure correctness)
+      - "narration": string (short line describing scene or dialogue)
+
+      Each frame differs in emotion, action, camera.
+      `;
+
+      return await callOpenAIAPI(promptForAPI);
+    }
+
+    async function generateFrameWithNarration(frameNumber) {
+      const scenario = document.getElementById('scenarioInput').value.trim();
+      const style = document.getElementById('styleSelection').value;
+      if(!scenario) return null;
+
+      const emotion = document.getElementById(`emotion-${frameNumber}`)?.value.trim() || "neutral";
+      const cameraValue = document.getElementById(`camera-${frameNumber}`)?.value || "";
+      const charsValue = document.getElementById(`characters-${frameNumber}`)?.value.trim() || "";
+      const locValue = document.getElementById(`location-${frameNumber}`)?.value.trim() || "";
+      const framePlot = storyOutline[frameNumber - 1] || "This frame continues the story logically.";
+
+      const promptForAPI = `
+      You are a helpful AI assistant. Return strictly valid JSON with EXACT keys: "emotion","characters","location","camera","action","prompt","narration".
+      No extra keys, no code blocks.
+      Scenario: "${scenario}"
+      Global: Characters="${globalCharacters}", Location="${globalLocation}"
+      Frame ${frameNumber} outline: "${framePlot}"
+      Style: "${style}"
+
+      Additional requirements:
+      - Maintain correct perspective, composition, and proportions.
+      - Negative prompt: "low quality, blurry, disfigured, extra limbs, watermark, text overlay, ugly, incorrect perspective, disproportionate".
+      - High-quality image in chosen style.
 
       Requirements:
       - "emotion": string
@@ -266,11 +259,10 @@
       - "location": string
       - "camera": string
       - "action": string
-      - "prompt": string (include style, ensure correct composition, no negatives)
-      - "narration": string (short line describing the scene or dialogue)
-      
-      Each frame differs from previous frames in emotion, action, camera.
-      Narration should reflect what's happening or be a line of dialogue.
+      - "prompt": string
+      - "narration": string
+
+      Each frame differs in emotion, action, camera. Narration suits the scene.
       `;
 
       return await callOpenAIAPI(promptForAPI);
