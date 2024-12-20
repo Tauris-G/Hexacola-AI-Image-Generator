@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Storyboard - HEXACOLA AI</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Išorinės bibliotekos PDF, vaizdo konvertavimui ir ZIP failams -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js" integrity="sha512-i2tAVXwcquMA3VT9SBO3lXny30YA6E6o61fzKTN5DFNIGonRIClALlsvf0YJbI8LL0zC2ItHyhhz/v93C9e5Zg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+</head>
+<body>
+  <div class="main-wrapper">
+    <aside class="sidebar">
+      <h2>Storyboard</h2>
+      <div class="input-group">
+        <label>Bendra Istorija:</label>
+        <textarea id="scenarioInput" placeholder="Parašykite savo istorijos scenarijų čia..."></textarea>
+      </div>
+      <div class="input-group">
+        <label>Stilius:</label>
+        <select id="styleSelection">
+          <option value="None">None</option>
+          <option value="Film">Film</option>
+          <option value="Pixel Art">Pixel Art</option>
+          <option value="Anime">Anime</option>
+          <option value="Realistic">Realistic</option>
+          <option value="Mix">Mix</option>
+          <option value="Storyboard">Storyboard</option>
+          <option value="Film Noir">Film Noir</option>
+          <option value="Vintage">Vintage</option>
+          <option value="Graphic Design">Graphic Design</option>
+          <option value="Cartoon">Cartoon</option>
+          <option value="Watercolor">Watercolor</option>
+          <option value="Surrealism">Surrealism</option>
+          <option value="Comics Style">Comics Style</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Modelis:</label>
+        <select id="modelSelection">
+          <option value="flux" selected>Pagrindinis</option>
+          <option value="flux-anime">Anime</option>
+          <option value="flux-3d">3D</option>
+          <option value="flux-pro">Pažangus</option>
+          <option value="flux-realism">Realizmas</option>
+          <option value="flux-cablyal">Detalus</option>
+          <option value="any-dark">Tamsus</option>
+          <option value="turbo">Greitas</option>
+          <option value="Unity">Pašėlęs</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <button class="generate tooltip" onclick="addFrame()">
+          <i class="fas fa-plus"></i> PRIDĖTI RĖMELĮ
+          <span class="tooltiptext">Pridėti naują rėmelį</span>
+        </button>
+      </div>
+      <div class="buttons">
+        <button class="generate tooltip" onclick="generateStoryboard()">
+          <i class="fas fa-magic"></i> GENERUOTI STORYBOARD
+        </button>
+        <button class="generate tooltip" onclick="saveStoryboard()">
+          <i class="fas fa-save"></i> IŠSAUGOTI
+        </button>
+        <button class="download tooltip" onclick="downloadStoryboardPDF()">
+          <i class="fas fa-file-pdf"></i> PDF
+        </button>
+        <button class="download tooltip" onclick="downloadStoryboardZIP()">
+          <i class="fas fa-file-zipper"></i> ZIP
+        </button>
+        <button class="generate tooltip" onclick="goToGenerator()">
+          <i class="fas fa-arrow-left"></i> GENERATOR
+        </button>
+      </div>
+      <div class="buttons">
+        <button class="auto-toggle tooltip" onclick="toggleAutoPrompt()" id="autoPromptBtn" data-tooltip="Automatiškai generuoti prompt'us" aria-pressed="false">
+          <i class="fas fa-robot"></i> AUTO OFF
+        </button>
+        <button class="dark-mode-toggle tooltip" onclick="toggleDarkMode()">
+          <i class="fas fa-moon"></i> 🌙
+        </button>
+      </div>
+    </aside>
+    <main class="container active" id="storyboardContainer">
+      <div class="header">
+        <h1>Storyboard Generator</h1>
+      </div>
+      <div class="generated-image" id="storyboardFrames"></div>
+    </main>
+  </div>
+
+  <div id="imageModal" class="modal">
+    <span class="close">&times;</span>
+    <img class="modal-content" id="modalImage" alt="Didelis vaizdas">
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="loader"></div>
+    <div id="loading">Generuojama...</div>
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    let currentFrameCount = 0;
+    let autoPromptEnabled = false;
+    let globalCharacters = "";
+    let globalLocation = "";
+    let storyOutline = []; 
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadStoryboard();
+      loadDarkMode();
+      loadAutoPrompt();
+      setupModal();
+      disableImageDownload();
+    });
+
+    async function generateGlobalDetails(scenario, style) {
+      const promptForAPI = `
+      You are a helpful AI assistant. Return pure JSON only, no code blocks.
+      The user provided a scenario: "${scenario}"
+      Style: "${style}"
+      Extract globalCharacters and globalLocation. Characters and location remain consistent across all frames (same clothes, hair, eyes, accessories, same background details) unless changed by outline.
+      Return { "globalCharacters": "...", "globalLocation": "..." }
+      `;
+      const obj = await callOpenAIAPI(promptForAPI);
+      return obj;
+    }
+
+    async function generateStoryOutline(scenario, framesCount) {
+      const promptForAPI = `
+      You are a helpful AI assistant. Return pure JSON only, no code blocks.
+      Scenario: "${scenario}"
+      ${framesCount} frames.
+      Outline the story into ${framesCount} chronological moments. Each frame must differ in action, emotion, camera usage, and narrative details from the previous. Show progression.
+      Return { "outline": ["frame1","frame2",...]}
+      `;
+      const obj = await callOpenAIAPI(promptForAPI);
+      return obj;
+    }
+
+    async function callOpenAIAPI(userMessage) {
+      try {
+        const response = await fetch('https://text.pollinations.ai/openai', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            messages:[
+              {role:'system',content:'You are a creative, detail-oriented AI assistant that returns only raw JSON with keys and values, no code blocks. Each response must reflect the chosen style, ensure chronological narrative progression, consistent characters/locations, and each frame differs in camera, emotion, and action. Produce strictly valid JSON.'},
+              {role:'user',content:userMessage}
+            ],
+            model:'openai',
+            seed:Math.floor(Math.random()*100000),
+            jsonMode:false
+          })
+        });
+
+        if(!response.ok) {
+          console.error('API klaida:', response.status, response.statusText);
+          return null;
+        }
+
+        const data=await response.json();
+        if(data.choices && data.choices.length>0 && data.choices[0].message) {
+          let content = data.choices[0].message.content.trim();
+          content = content.replace(/```/g,'').trim();
+          try {
+            const obj = JSON.parse(content);
+            return obj;
+          } catch(e) {
+            console.error('JSON parse klaida:', e, 'JSON content was:', content);
+            alert("Klaida apdorojant AI atsakymą. Bandykite su kitu scenarijumi arba pakartokite veiksmą.");
+            return null;
+          }
+        }
+        return null;
+      } catch(err) {
+        console.error('fetch klaida:', err);
+        return null;
+      }
+    }
+
+    async function generateAutoFrameDetails(frameNumber) {
+      const scenario = document.getElementById('scenarioInput').value.trim();
+      const style = document.getElementById('styleSelection').value;
+      if(!scenario) return null;
+
+      const emotion = document.getElementById(`emotion-${frameNumber}`)?.value.trim() || "neutral";
+      const cameraValue = document.getElementById(`camera-${frameNumber}`)?.value || "";
+      const charsValue = document.getElementById(`characters-${frameNumber}`)?.value.trim() || "";
+      const locValue = document.getElementById(`location-${frameNumber}`)?.value.trim() || "";
+      const framePlot = storyOutline[frameNumber - 1] || "This frame continues the story logically.";
+
+      const actionPromptPart = `
+      Action is from scenario, outline, style, and global details.
+      Each frame: chronological progression, distinct from previous frames in camera, emotion, action.
+      Keep global chars/loc consistent unless outline changes.
+      No repeating same camera plan consecutively.
+      Style: "${style}".
+      `;
+
+      const promptForAPI = `
+      You are a helpful AI assistant. Return pure JSON only, no code blocks.
+      Scenario: "${scenario}"
+      Global: Characters="${globalCharacters}", Location="${globalLocation}"
+      Outline frame ${frameNumber}: "${framePlot}"
+
+      Requirements:
+      - Emotion: "${emotion}"
+      - Camera (user suggestion): "${cameraValue}" (adjust if needed)
+      - Extra chars details: "${charsValue}"
+      - Extra location details: "${locValue}"
+      
+      ${actionPromptPart}
+
+      Return { "emotion":"...", "characters":"...", "location":"...", "camera":"...", "action":"...", "prompt":"..." }
+      `;
+
+      const obj = await callOpenAIAPI(promptForAPI);
+      return obj;
+    }
+
+    function addFrame() {
+      if (currentFrameCount >= 10) {
+        alert('Galite pridėti tik 10 rėmelių.');
+        return;
+      }
+      currentFrameCount++;
+      const framesContainer = document.getElementById('storyboardFrames');
+      const frame = document.createElement('div');
+      frame.classList.add('image-container');
+      frame.setAttribute('id', `frame-${currentFrameCount}`);
+      frame.innerHTML = `
+        <h3>Rėmelis ${currentFrameCount}</h3>
+        <button class="remove-frame-btn tooltip" onclick="removeFrame(${currentFrameCount})" aria-label="Pašalinti rėmelį">
+          <i class="fas fa-trash-alt"></i>
+          <span class="tooltiptext">Pašalinti rėmelį</span>
+        </button>
+        <div class="input-group">
+          <label for="emotion-${currentFrameCount}">Emocija:</label>
+          <input type="text" id="emotion-${currentFrameCount}" placeholder="Pvz., džiaugsmas..." />
+        </div>
+        <div class="input-group">
+          <label for="camera-${currentFrameCount}">Kameros Planas:</label>
+          <select id="camera-${currentFrameCount}">
+            <option value="">Pasirinkite</option>
+            <option value="Wide Shot">Wide Shot</option>
+            <option value="Close-Up">Close-Up</option>
+            <option value="Extreme Close-Up">Extreme Close-Up</option>
+            <option value="Dolly Shot">Dolly Shot</option>
+            <option value="Point of View">Point of View</option>
+            <option value="Tilt">Tilt</option>
+            <option value="Panorama">Panorama</option>
+            <option value="Drone Shot">Drone Shot</option>
+            <option value="Focus Pull">Focus Pull</option>
+            <option value="Tracking Shot">Tracking Shot</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="characters-${currentFrameCount}">Personažai:</label>
+          <textarea id="characters-${currentFrameCount}" placeholder="Specifiniai personažų aprašymai..." rows="2"></textarea>
+        </div>
+        <div class="input-group">
+          <label for="location-${currentFrameCount}">Lokacija:</label>
+          <input type="text" id="location-${currentFrameCount}" placeholder="Specifinė lokacija..." />
+        </div>
+        <div class="input-group">
+          <label for="aspectRatio-${currentFrameCount}">Nuotraukos Santykis:</label>
+          <select id="aspectRatio-${currentFrameCount}">
+            <option value="16:9">16:9</option>
+            <option value="4:3">4:3</option>
+            <option value="9:16">9:16</option>
+            <option value="1:1">1:1</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Sugeneruotas Vaizdas:</label>
+          <img id="image-${currentFrameCount}" src="#" alt="Sugeneruotas vaizdas" style="display:none;cursor:pointer;" onclick="openModal(${currentFrameCount})" />
+        </div>
+        <input type="hidden" id="prompt-${currentFrameCount}" />
+      `;
+      framesContainer.appendChild(frame);
+    }
+
+    function fillFrameWithDetails(n, details){
+      if(!details) return;
+      document.getElementById(`emotion-${n}`).value = details.emotion || 'neutral';
+      document.getElementById(`characters-${n}`).value = details.characters || globalCharacters;
+      document.getElementById(`location-${n}`).value = details.location || globalLocation;
+      const camSelect=document.getElementById(`camera-${n}`);
+      if(details.camera){
+        for(const opt of camSelect.options){
+          if(opt.value===details.camera){
+            camSelect.value=details.camera;
+            break;
+          }
+        }
+      }
+
+      let finalPrompt = details.prompt;
+      if(details.action && details.action!==''){
+        finalPrompt += " [Action: " + details.action + "]";
+      }
+      document.getElementById(`prompt-${n}`).value=finalPrompt;
+    }
+
+    async function autoGenerateFrameDetailsForAll() {
+      const scenario = document.getElementById('scenarioInput').value.trim();
+      const style = document.getElementById('styleSelection').value;
+      if(!scenario) return; 
+
+      const globalData = await generateGlobalDetails(scenario, style);
+      if(!globalData || !globalData.globalCharacters || !globalData.globalLocation) {
+        console.error("Nepavyko gauti globalių duomenų. Patikrinkite, ar scenarijus tinkamas ir bandykite dar kartą.");
+        return;
+      }
+      
+      globalCharacters = globalData.globalCharacters;
+      globalLocation = globalData.globalLocation;
+
+      const outlineData = await generateStoryOutline(scenario, currentFrameCount);
+      if(!outlineData || !outlineData.outline) {
+        console.error("Nepavyko gauti istorijos plano. Patikrinkite, ar scenarijus tinkamas ir bandykite dar kartą.");
+        return;
+      }
+      
+      storyOutline = outlineData.outline;
+
+      for (let i=1; i<=currentFrameCount; i++){
+        const details = await generateAutoFrameDetails(i);
+        if(details){
+          fillFrameWithDetails(i, details);
+        } else {
+          console.error(`Nepavyko gauti duomenų rėmeliui ${i}.`);
+        }
+      }
+    }
+
+    function removeFrame(num) {
+      const frame = document.getElementById(`frame-${num}`);
+      if (frame) {
+        frame.remove();
+        currentFrameCount--;
+        const allFrames = document.querySelectorAll('.image-container[id^="frame-"]');
+        allFrames.forEach((f, index) => {
+          const newNum = index + 1;
+          f.id = `frame-${newNum}`;
+          f.querySelector('h3').textContent = `Rėmelis ${newNum}`;
+          f.querySelector('.remove-frame-btn').setAttribute('onclick', `removeFrame(${newNum})`);
+          f.querySelectorAll('[id]').forEach(el => {
+            el.id = el.id.replace(/\d+$/, newNum);
+          });
+          const img = f.querySelector('img[onclick]');
+          if (img) img.setAttribute('onclick', `openModal(${newNum})`);
+        });
+      }
+    }
+
+    async function generateStoryboard() {
+      const scenario = document.getElementById('scenarioInput').value.trim();
+      if (!scenario) {
+        alert('Įveskite scenarijų.');
+        return;
+      }
+      if (currentFrameCount === 0) {
+        alert('Pridėkite bent vieną rėmelį.');
+        return;
+      }
+
+      if(autoPromptEnabled && scenario!==''){
+        await autoGenerateFrameDetailsForAll();
+      }
+
+      for (let i=1;i<=currentFrameCount;i++){
+        const prompt=document.getElementById(`prompt-${i}`).value.trim();
+        if(!prompt){
+          alert(`Nepavyko sugeneruoti prompt rėmeliui ${i}. Įjunkite AUTO ON ir pateikite scenarijų, arba suveskite rankiniu būdu.`);
+          return;
+        }
+      }
+
+      document.getElementById('overlay').style.display = 'flex';
+      updateProgressBar(0);
+      const model = document.getElementById('modelSelection').value;
+
+      try {
+        for (let i = 1; i <= currentFrameCount; i++) {
+          const prompt = document.getElementById(`prompt-${i}`).value.trim();
+          const aspect = document.getElementById(`aspectRatio-${i}`).value;
+          let w, h;
+          switch(aspect) {
+            case '16:9': w=1920;h=1080;break;
+            case '4:3': w=1600;h=1200;break;
+            case '9:16': w=1080;h=1920;break;
+            case '1:1': w=1080;h=1080;break;
+            default: w=1024;h=1024;
+          }
+          const imgEl = document.getElementById(`image-${i}`);
+          if (imgEl.src && imgEl.src !== '#' && imgEl.style.display === 'block') continue; 
+          const imgUrl = await fetchImage(prompt, model, w, h);
+          imgEl.src = imgUrl;
+          imgEl.style.display = 'block';
+          updateProgressBar((i/currentFrameCount)*100);
+        }
+        alert('Storyboard sugeneruotas!');
+      } catch(e) {
+        console.error(e);
+        alert('Klaida generuojant storyboard. Patikrinkite konsolę arba bandykite dar kartą.');
+      } finally {
+        document.getElementById('overlay').style.display = 'none';
+      }
+    }
+
+    async function fetchImage(prompt,model,w,h) {
+      const enc = encodeURIComponent(prompt);
+      const seed = Math.floor(Math.random()*100000);
+      const url=`https://image.pollinations.ai/prompt/${enc}?model=${model}&seed=${seed}&width=${w}&height=${h}&nologo=true&private=false&enhance=true&safe=true`;
+      const resp=await fetch(url);
+      if(!resp.ok) throw new Error('Nepavyko gauti vaizdo.');
+      const blob=await resp.blob();
+      return URL.createObjectURL(blob);
+    }
+
+    function updateProgressBar(pct) {
+      document.getElementById('progressBar').style.width = pct+'%';
+    }
+
+    function saveStoryboard() {
+      const storyboard=[];
+      for (let i=1;i<=currentFrameCount;i++){
+        const frm=document.getElementById(`frame-${i}`);
+        if(frm){
+          const image=frm.querySelector(`img`).src;
+          const emotion=frm.querySelector(`#emotion-${i}`).value.trim();
+          const camera=frm.querySelector(`#camera-${i}`).value;
+          const chars=frm.querySelector(`#characters-${i}`).value.trim();
+          const loc=frm.querySelector(`#location-${i}`).value.trim();
+          const fullPrompt=frm.querySelector(`#prompt-${i}`).value.trim();
+          let action="unknown action";
+          let purePrompt=fullPrompt;
+          const actionMatch = fullPrompt.match(/\[Action:\s*(.*?)\]/);
+          if(actionMatch && actionMatch[1]){
+            action = actionMatch[1];
+            purePrompt = fullPrompt.replace(/\[Action:.*?\]/,'').trim();
+          }
+          const pr=purePrompt;
+          const asp=frm.querySelector(`#aspectRatio-${i}`).value;
+          storyboard.push({image,emotion,camera,characters:chars,location:loc,action, prompt:pr,aspectRatio:asp});
+        }
+      }
+      localStorage.setItem('storyboard',JSON.stringify(storyboard));
+      alert('Išsaugota!');
+    }
+
+    async function downloadStoryboardPDF() {
+      const { jsPDF } = window.jspdf;
+      if(currentFrameCount===0){alert('Nėra rėmelių.');return;}
+      const pdf=new jsPDF('p','mm','a4');
+      let y=10;
+      for(let i=1;i<=currentFrameCount;i++){
+        const frm=document.getElementById(`frame-${i}`);
+        if(frm){
+          const canvas=await html2canvas(frm,{scale:2});
+          const img=canvas.toDataURL('image/png');
+          const props=pdf.getImageProperties(img);
+          const pw=pdf.internal.pageSize.getWidth()-20;
+          const ph=(props.height*pw)/props.width;
+          if(y+ph>pdf.internal.pageSize.getHeight()){pdf.addPage();y=10;}
+          pdf.addImage(img,'PNG',10,y,pw,ph);
+          y+=ph+10;
+        }
+      }
+      pdf.save('storyboard.pdf');
+    }
+
+    async function downloadStoryboardZIP() {
+      if(currentFrameCount===0){alert('Nėra rėmelių.');return;}
+      const zip=new JSZip();
+      const folder=zip.folder("images");
+      const tasks=[];
+      for(let i=1;i<=currentFrameCount;i++){
+        const imgEl=document.getElementById(`image-${i}`);
+        if(imgEl && imgEl.src && imgEl.src!=='#' && imgEl.src.startsWith('blob:')){
+          const url=imgEl.src;
+          const fname=`frame-${i}.png`;
+          tasks.push(fetch(url).then(r=>r.blob()).then(b=>folder.file(fname,b)));
+        }
+      }
+      try{
+        await Promise.all(tasks);
+        const data=await zip.generateAsync({type:"blob"});
+        saveAs(data,"storyboard_images.zip");
+      }catch(e){
+        console.error(e);
+        alert('Klaida kuriant ZIP.');
+      }
+    }
+
+    function goToGenerator() {
+      window.location.href='index.html';
+    }
+
+    function loadStoryboard() {
+      const saved=JSON.parse(localStorage.getItem('storyboard'))||[];
+      if(saved.length>0){
+        saved.forEach((fr,i)=>{
+          addFrame();
+          const n=i+1;
+          document.getElementById(`emotion-${n}`).value=fr.emotion;
+          document.getElementById(`camera-${n}`).value=fr.camera;
+          document.getElementById(`characters-${n}`).value=fr.characters;
+          document.getElementById(`location-${n}`).value=fr.location;
+          let reconstructedPrompt=fr.prompt;
+          if(fr.action && fr.action!=='unknown action'){
+            reconstructedPrompt += " [Action: "+fr.action+"]";
+          }
+          document.getElementById(`prompt-${n}`).value=reconstructedPrompt;
+          document.getElementById(`aspectRatio-${n}`).value=fr.aspectRatio||'16:9';
+          if(fr.image && fr.image!=='#'){
+            const img=document.getElementById(`image-${n}`);
+            img.src=fr.image;
+            img.style.display='block';
+          }
+        });
+      }
+    }
+
+    function openModal(n) {
+      const imgSrc=document.getElementById(`image-${n}`).src;
+      const modal=document.getElementById('imageModal');
+      const modalImg=document.getElementById('modalImage');
+      modal.style.display='flex';
+      modalImg.src=imgSrc;
+    }
+
+    function setupModal() {
+      const modal=document.getElementById('imageModal');
+      const closeBtn=document.querySelector('.close');
+      closeBtn.onclick=function(){modal.style.display='none';};
+      window.onclick=function(e){if(e.target==modal){modal.style.display='none';}};
+    }
+
+    function disableImageDownload() {
+      const images=document.querySelectorAll('#storyboardFrames img');
+      images.forEach(img=>{
+        img.oncontextmenu=(e)=>e.preventDefault();
+        img.draggable=false;
+      });
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+      const darkBtn=document.querySelector('.dark-mode-toggle');
+      if(document.body.classList.contains('dark-mode')){
+        darkBtn.innerHTML='<i class="fas fa-sun"></i> ☀️';
+        darkBtn.setAttribute('aria-label','Šviesus režimas');
+      }else{
+        darkBtn.innerHTML='<i class="fas fa-moon"></i> 🌙';
+        darkBtn.setAttribute('aria-label','Tamsus režimas');
+      }
+      localStorage.setItem('darkMode',document.body.classList.contains('dark-mode'));
+    }
+
+    function loadDarkMode() {
+      const dm=localStorage.getItem('darkMode');
+      const darkBtn=document.querySelector('.dark-mode-toggle');
+      if(dm==='true'){
+        document.body.classList.add('dark-mode');
+        darkBtn.innerHTML='<i class="fas fa-sun"></i> ☀️';
+        darkBtn.setAttribute('aria-label','Šviesus režimas');
+      }else{
+        darkBtn.innerHTML='<i class="fas fa-moon"></i> 🌙';
+        darkBtn.setAttribute('aria-label','Tamsus režimas');
+      }
+    }
+
+    function toggleAutoPrompt() {
+      autoPromptEnabled=!autoPromptEnabled;
+      const btn=document.getElementById('autoPromptBtn');
+      if(autoPromptEnabled){
+        btn.classList.add('active');
+        btn.innerHTML='<i class="fas fa-robot"></i> AUTO ON';
+        btn.setAttribute('aria-pressed','true');
+        localStorage.setItem('autoPrompt','enabled');
+        const scenario=document.getElementById('scenarioInput').value.trim();
+        if(scenario!==''){
+          autoGenerateFrameDetailsForAll();
+        }
+      }else{
+        btn.classList.remove('active');
+        btn.innerHTML='<i class="fas fa-robot"></i> AUTO OFF';
+        btn.setAttribute('aria-pressed','false');
+        localStorage.setItem('autoPrompt','disabled');
+      }
+    }
+
+    function loadAutoPrompt() {
+      const ap=localStorage.getItem('autoPrompt');
+      const btn=document.getElementById('autoPromptBtn');
+      if(ap==='enabled'){
+        autoPromptEnabled=true;
+        btn.classList.add('active');
+        btn.innerHTML='<i class="fas fa-robot"></i> AUTO ON';
+        btn.setAttribute('aria-pressed','true');
+      }else{
+        autoPromptEnabled=false;
+        btn.classList.remove('active');
+        btn.innerHTML='<i class="fas fa-robot"></i> AUTO OFF';
+        btn.setAttribute('aria-pressed','false');
+      }
+    }
+  </script>
+</body>
+</html>
