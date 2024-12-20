@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
-  <!-- Išorinės bibliotekos PDF, vaizdo konvertavimui ir ZIP failams -->
+  <!-- Būtinos išorinės bibliotekos PDF, vaizdo konvertavimui ir ZIP failams -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js" integrity="sha512-i2tAVXwcquMA3VT9SBO3lXny30YA6E6o61fzKTN5DFNIGonRIClALlsvf0YJbI8LL0zC2ItHyhhz/v93C9e5Zg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -93,6 +93,21 @@
         <h1>Storyboard Generator</h1>
       </div>
       <div class="generated-image" id="storyboardFrames"></div>
+
+      <!-- Instrukcijos apačioje -->
+      <div class="instructions" style="margin:20px;">
+        <h2>Kaip naudotis:</h2>
+        <ol>
+          <li>Įrašykite bendrą istorijos scenarijų kairėje esančiame laukelyje "Bendra Istorija".</li>
+          <li>Pasirinkite norimą stilių, modelį ir pridėkite rėmelius (iki 10). Kiekviename rėmelyje galite nurodyti emociją, kameros planą, personažus ir lokaciją.</li>
+          <li>Jeigu įjungtas AUTO ON, sistema pagal jūsų scenarijų automatiškai sugeneruos kiekvieno rėmelio aprašymus ir vaizdo prompt'us. Jei AUTO OFF, galite patys suvesti detales.</li>
+          <li>Paspauskite "GENERUOTI STORYBOARD", kad gautumėte vaizdus. Kiekvienas rėmelis bus sugeneruotas paeiliui.</li>
+          <li>Jeigu kuris nors rėmelis jums nepatinka, po generavimo prie jo atsiras mygtukas "Pergeneruoti Rėmelį". Paspaudę jį, tik tam konkrečiam rėmeliui bus bandyta iš naujo gauti vaizdą ar atnaujinti jo prompt (jei AUTO ON).</li>
+          <li>Galite išsaugoti storyboard lokaliai spustelėdami "IŠSAUGOTI". Vėliau išsaugotus duomenis galima atkurti atidarius puslapį iš naujo.</li>
+          <li>Galite atsisiųsti visą storyboard kaip PDF arba ZIP formatu spustelėdami atitinkamus mygtukus.</li>
+          <li>Tamsus režimas keičiamas "🌙" mygtuku. AUTO ON/OFF valdomas robotuko mygtuku.</li>
+        </ol>
+      </div>
     </main>
   </div>
 
@@ -141,7 +156,7 @@
       const promptForAPI = `
       You are a helpful AI assistant. Return strictly valid JSON with keys and values only, no code blocks.
       Scenario: "${scenario}"
-      ${framesCount} frames.
+      We have ${framesCount} frames.
       Outline story into ${framesCount} chronological moments.
       Each frame must differ in emotion, action, camera shot, but keep same style and same global chars/loc details.
       Return exactly: { "outline": ["frame1", "frame2", ...] }
@@ -330,6 +345,9 @@
           <div class="narration-text" id="narration-${currentFrameCount}" style="font-style:italic;"></div>
         </div>
         <input type="hidden" id="prompt-${currentFrameCount}" />
+        <button class="generate tooltip" onclick="regenerateFrame(${currentFrameCount})" style="margin-top:10px;">
+          <i class="fas fa-sync-alt"></i> PERGENERUOTI RĖMELĮ
+        </button>
       `;
       framesContainer.appendChild(frame);
     }
@@ -414,6 +432,8 @@
           });
           const img = f.querySelector('img[onclick]');
           if (img) img.setAttribute('onclick', `openModal(${newNum})`);
+          const regenBtn = f.querySelector('button[onclick^="regenerateFrame"]');
+          if (regenBtn) regenBtn.setAttribute('onclick', `regenerateFrame(${newNum})`);
         });
       }
     }
@@ -464,7 +484,7 @@
 
         let success = false;
         let attempts = 0;
-        const maxAttempts = 5; // padidiname bandymų skaičių iki 5
+        const maxAttempts = 5;
         while(!success && attempts < maxAttempts) {
           try {
             const imgUrl = await fetchImage(prompt, model, w, h);
@@ -484,6 +504,72 @@
 
       alert('Storyboard sugeneruotas!');
       document.getElementById('overlay').style.display = 'none';
+    }
+
+    async function regenerateFrame(n) {
+      // Pergeneruoja tik vieną konkretų rėmelį
+      const scenario = document.getElementById('scenarioInput').value.trim();
+      if(!scenario) {
+        alert('Įveskite scenarijų prieš pergeneruojant rėmelį.');
+        return;
+      }
+
+      // Jei autoPromptEnabled yra true ir turime scenarijų, bandysime vėl gauti duomenis rėmeliui n
+      if(autoPromptEnabled && scenario!==''){
+        const details = await generateFrameWithNarration(n);
+        if(details){
+          fillFrameWithDetails(n, details);
+        } else {
+          console.error(`Nepavyko pergeneruoti duomenų rėmeliui ${n}.`);
+          return;
+        }
+      }
+
+      // Dabar turime prompt, bandome gauti vaizdą
+      const prompt=document.getElementById(`prompt-${n}`).value.trim();
+      if(!prompt){
+        alert(`Nepavyko gauti prompt rėmeliui ${n}, bandykite įjungti AUTO ON arba suvesti rankiniu būdu.`);
+        return;
+      }
+
+      const model = document.getElementById('modelSelection').value;
+      const aspect = document.getElementById(`aspectRatio-${n}`).value;
+      let w, h;
+      switch(aspect) {
+        case '16:9': w=1920;h=1080;break;
+        case '4:3': w=1600;h=1200;break;
+        case '9:16': w=1080;h=1920;break;
+        case '1:1': w=1080;h=1080;break;
+        default: w=1024;h=1024;
+      }
+
+      const imgEl = document.getElementById(`image-${n}`);
+      imgEl.style.display='none'; // paslėpti seną vaizdą, jei buvo
+      document.getElementById('overlay').style.display = 'flex';
+      updateProgressBar(0);
+
+      let success = false;
+      let attempts = 0;
+      const maxAttempts = 5;
+      while(!success && attempts < maxAttempts) {
+        try {
+          const imgUrl = await fetchImage(prompt, model, w, h);
+          imgEl.src = imgUrl;
+          imgEl.style.display = 'block';
+          success = true;
+        } catch(e) {
+          attempts++;
+          console.error(`Bandymas ${attempts}: Nepavyko pergeneruoti vaizdo rėmeliui ${n}`, e);
+          if(attempts >= maxAttempts) {
+            alert(`Nepavyko pergeneruoti vaizdo rėmeliui ${n} net po ${maxAttempts} bandymų.`);
+          }
+        }
+      }
+
+      document.getElementById('overlay').style.display = 'none';
+      if(success){
+        alert(`Rėmelis ${n} sėkmingai pergeneruotas!`);
+      }
     }
 
     async function fetchImage(prompt,model,w,h) {
