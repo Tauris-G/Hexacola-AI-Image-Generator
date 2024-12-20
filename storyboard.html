@@ -90,7 +90,7 @@
     </aside>
     <main class="container active" id="storyboardContainer">
       <div class="header">
-        <h1>Storyboard Generator</h1>
+        <h1>Storyboard Generator (BETA)</h1>
       </div>
       <div class="generated-image" id="storyboardFrames"></div>
 
@@ -217,7 +217,7 @@
       const framePlot = storyOutline[frameNumber - 1] || "This frame continues the story logically.";
 
       const promptForAPI = `
-      You are a helpful AI assistant. Return strictly valid JSON with EXACT keys: "emotion","characters","location","camera","action","prompt","narration".
+      You are a helpful AI assistant storyboard image creator. Return strictly valid JSON with EXACT keys: "emotion","characters","location","camera","action","prompt","narration".
       No extra keys, no code blocks.
       Scenario: "${scenario}"
       Global: Characters="${globalCharacters}", Location="${globalLocation}"
@@ -238,7 +238,7 @@
       - "prompt": string (include style and ensure correctness)
       - "narration": string (short line describing scene or dialogue)
 
-      Each frame differs in emotion, action, camera.
+      Each frame differs in emotion, action, camera. Narration suits the scene, dialogue, or action, and is a short line, not a full script, but can include dialogue, if needed, narative text is simple and descriptive, characters and background are described in detail. Choosen style is maintained. No extra keys, no code blocks. Always follow Additional requirements and ensure correctness.
       `;
 
       return await callOpenAIAPI(promptForAPI);
@@ -256,7 +256,7 @@
       const framePlot = storyOutline[frameNumber - 1] || "This frame continues the story logically.";
 
       const promptForAPI = `
-      You are a helpful AI assistant. Return strictly valid JSON with EXACT keys: "emotion","characters","location","camera","action","prompt","narration".
+      You are a helpful AI assistant storyboard image creator. Return strictly valid JSON with EXACT keys: "emotion","characters","location","camera","action","prompt","narration".
       No extra keys, no code blocks.
       Scenario: "${scenario}"
       Global: Characters="${globalCharacters}", Location="${globalLocation}"
@@ -277,7 +277,7 @@
       - "prompt": string
       - "narration": string
 
-      Each frame differs in emotion, action, camera. Narration suits the scene.
+      Each frame differs in emotion, action, camera. Narration suits the scene, dialogue, or action, and is a short line, not a full script, but can include dialogue, if needed, narative text is simple and descriptive, characters and background are described in detail. Choosen style is maintained. No extra keys, no code blocks. Always follow Additional requirements and ensure correctness.
       `;
 
       return await callOpenAIAPI(promptForAPI);
@@ -575,7 +575,7 @@
     async function fetchImage(prompt,model,w,h) {
       const enc = encodeURIComponent(prompt);
       const seed = Math.floor(Math.random()*100000);
-      const url=`https://image.pollinations.ai/prompt/${enc}?model=${model}&seed=${seed}&width=${w}&height=${h}&nologo=true&private=false&enhance=true&safe=true`;
+      const url=`https://image.pollinations.ai/prompt/${enc}?model=${model}&seed=${seed}&width=${w}&height=${h}&nologo=true&private=false&enhance=true&safe=false`;
       const resp=await fetch(url);
       if(!resp.ok) throw new Error('Nepavyko gauti vaizdo.');
       const blob=await resp.blob();
