@@ -464,7 +464,7 @@
 
         let success = false;
         let attempts = 0;
-        const maxAttempts = 3;
+        const maxAttempts = 5; // padidiname bandymų skaičių iki 5
         while(!success && attempts < maxAttempts) {
           try {
             const imgUrl = await fetchImage(prompt, model, w, h);
