@@ -127,26 +127,26 @@
 
     async function generateGlobalDetails(scenario, style) {
       const promptForAPI = `
-      You are a helpful AI assistant. Return pure JSON only, no code blocks.
-      The user provided a scenario: "${scenario}"
+      You are a helpful AI assistant. Return strictly valid JSON with keys and values only, no code blocks.
+      Scenario: "${scenario}"
       Style: "${style}"
-      Extract globalCharacters and globalLocation. Characters and location remain consistent across all frames (same clothes, hair, eyes, accessories, same background details) unless changed by outline.
-      Return { "globalCharacters": "...", "globalLocation": "..." }
+      Extract globalCharacters and globalLocation. Must include detailed clothing, hair, eye color, accessories for characters and background details for location.
+      These details must not change across frames unless outline says so.
+      Return exactly: { "globalCharacters": "..." , "globalLocation": "..." }
       `;
-      const obj = await callOpenAIAPI(promptForAPI);
-      return obj;
+      return await callOpenAIAPI(promptForAPI);
     }
 
     async function generateStoryOutline(scenario, framesCount) {
       const promptForAPI = `
-      You are a helpful AI assistant. Return pure JSON only, no code blocks.
+      You are a helpful AI assistant. Return strictly valid JSON with keys and values only, no code blocks.
       Scenario: "${scenario}"
       ${framesCount} frames.
-      Outline the story into ${framesCount} chronological moments. Each frame must differ in action, emotion, camera usage, and narrative details from the previous. Show progression.
-      Return { "outline": ["frame1","frame2",...]}
+      Outline story into ${framesCount} chronological moments.
+      Each frame must differ in emotion, action, camera shot, but keep same style and same global chars/loc details.
+      Return exactly: { "outline": ["frame1", "frame2", ...] }
       `;
-      const obj = await callOpenAIAPI(promptForAPI);
-      return obj;
+      return await callOpenAIAPI(promptForAPI);
     }
 
     async function callOpenAIAPI(userMessage) {
@@ -156,7 +156,7 @@
           headers:{'Content-Type':'application/json'},
           body: JSON.stringify({
             messages:[
-              {role:'system',content:'You are a creative, detail-oriented AI assistant that returns only raw JSON with keys and values, no code blocks. Each response must reflect the chosen style, ensure chronological narrative progression, consistent characters/locations, and each frame differs in camera, emotion, and action. Produce strictly valid JSON.'},
+              {role:'system',content:'You produce strictly valid JSON with keys and string values only. No code blocks. The JSON must have exactly the requested keys. Each response must reflect chosen style, maintain identical character/location details, differ each frame in camera, emotion, action. Return only the requested fields.'},
               {role:'user',content:userMessage}
             ],
             model:'openai',
@@ -179,7 +179,7 @@
             return obj;
           } catch(e) {
             console.error('JSON parse klaida:', e, 'JSON content was:', content);
-            alert("Klaida apdorojant AI atsakymą. Bandykite su kitu scenarijumi arba pakartokite veiksmą.");
+            alert("Klaida apdorojant AI atsakymą. Bandykite kitą scenarijų arba pakartokite veiksmą.");
             return null;
           }
         }
@@ -201,33 +201,27 @@
       const locValue = document.getElementById(`location-${frameNumber}`)?.value.trim() || "";
       const framePlot = storyOutline[frameNumber - 1] || "This frame continues the story logically.";
 
-      const actionPromptPart = `
-      Action is from scenario, outline, style, and global details.
-      Each frame: chronological progression, distinct from previous frames in camera, emotion, action.
-      Keep global chars/loc consistent unless outline changes.
-      No repeating same camera plan consecutively.
-      Style: "${style}".
-      `;
-
+      // Aišku nurodome, kad grąžintų būtent šiuos laukus:
       const promptForAPI = `
-      You are a helpful AI assistant. Return pure JSON only, no code blocks.
+      You are a helpful AI assistant. Return strictly valid JSON with EXACT keys: "emotion","characters","location","camera","action","prompt".
+      No extra keys, no code blocks.
       Scenario: "${scenario}"
       Global: Characters="${globalCharacters}", Location="${globalLocation}"
-      Outline frame ${frameNumber}: "${framePlot}"
+      Frame ${frameNumber} outline: "${framePlot}"
+      Style: "${style}"
 
       Requirements:
-      - Emotion: "${emotion}"
-      - Camera (user suggestion): "${cameraValue}" (adjust if needed)
-      - Extra chars details: "${charsValue}"
-      - Extra location details: "${locValue}"
+      - "emotion": string describing emotion of scene
+      - "characters": string describing characters exactly as global, plus any changes allowed by outline
+      - "location": string describing location exactly as global, plus any changes allowed by outline
+      - "camera": string describing a distinct camera shot/angle. Must differ from previous frames if logically possible.
+      - "action": string describing action in this frame
+      - "prompt": a single string integrating style, characters, location details, emotion, camera plan, and action into one cohesive visual description. Must reflect chosen style, identical character and location details from global.
       
-      ${actionPromptPart}
-
-      Return { "emotion":"...", "characters":"...", "location":"...", "camera":"...", "action":"...", "prompt":"..." }
+      Each frame differs from previous frames in emotion, action, camera, but keeps the same style and the same character/location details (unless changed by outline).
       `;
 
-      const obj = await callOpenAIAPI(promptForAPI);
-      return obj;
+      return await callOpenAIAPI(promptForAPI);
     }
 
     function addFrame() {
@@ -294,21 +288,27 @@
 
     function fillFrameWithDetails(n, details){
       if(!details) return;
-      document.getElementById(`emotion-${n}`).value = details.emotion || 'neutral';
-      document.getElementById(`characters-${n}`).value = details.characters || globalCharacters;
-      document.getElementById(`location-${n}`).value = details.location || globalLocation;
+      const requiredKeys = ["emotion","characters","location","camera","action","prompt"];
+      for(const k of requiredKeys) {
+        if(!details.hasOwnProperty(k) || typeof details[k]!=='string') {
+          console.error(`Nepilni duomenys rėmeliui ${n}`, details);
+          return;
+        }
+      }
+
+      document.getElementById(`emotion-${n}`).value = details.emotion;
+      document.getElementById(`characters-${n}`).value = details.characters;
+      document.getElementById(`location-${n}`).value = details.location;
       const camSelect=document.getElementById(`camera-${n}`);
-      if(details.camera){
-        for(const opt of camSelect.options){
-          if(opt.value===details.camera){
-            camSelect.value=details.camera;
-            break;
-          }
+      for(const opt of camSelect.options){
+        if(opt.value===details.camera){
+          camSelect.value=details.camera;
+          break;
         }
       }
 
       let finalPrompt = details.prompt;
-      if(details.action && details.action!==''){
+      if(details.action !== 'unknown' && details.action.trim()!==''){
         finalPrompt += " [Action: " + details.action + "]";
       }
       document.getElementById(`prompt-${n}`).value=finalPrompt;
@@ -321,7 +321,7 @@
 
       const globalData = await generateGlobalDetails(scenario, style);
       if(!globalData || !globalData.globalCharacters || !globalData.globalLocation) {
-        console.error("Nepavyko gauti globalių duomenų. Patikrinkite, ar scenarijus tinkamas ir bandykite dar kartą.");
+        console.error("Nepavyko gauti globalių duomenų. Pabandykite kitą scenarijų.");
         return;
       }
       
@@ -330,7 +330,7 @@
 
       const outlineData = await generateStoryOutline(scenario, currentFrameCount);
       if(!outlineData || !outlineData.outline) {
-        console.error("Nepavyko gauti istorijos plano. Patikrinkite, ar scenarijus tinkamas ir bandykite dar kartą.");
+        console.error("Nepavyko gauti istorijos plano. Bandykite kitą scenarijų.");
         return;
       }
       
