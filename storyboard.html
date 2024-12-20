@@ -142,7 +142,7 @@
 
     async function generateGlobalDetails(scenario, style) {
       const promptForAPI = `
-      You are a helpful AI assistant. Return strictly valid JSON with keys and values only, no code blocks.
+      You are a helpful AI storyboard image generator assistant. Return strictly valid JSON with keys and values only, no code blocks.
       Scenario: "${scenario}"
       Style: "${style}"
       Extract globalCharacters and globalLocation. Must include detailed clothing, hair, eye color, accessories for characters and background details for location.
@@ -154,7 +154,7 @@
 
     async function generateStoryOutline(scenario, framesCount) {
       const promptForAPI = `
-      You are a helpful AI assistant. Return strictly valid JSON with keys and values only, no code blocks.
+      You are a helpful AI storyboard image generator assistant. Return strictly valid JSON with keys and values only, no code blocks.
       Scenario: "${scenario}"
       We have ${framesCount} frames.
       Outline story into ${framesCount} chronological moments.
@@ -238,7 +238,8 @@
       - "prompt": string (include style and ensure correctness)
       - "narration": string (short line describing scene or dialogue)
 
-      Each frame differs in emotion, action, camera. Narration suits the scene, dialogue, or action, and is a short line, not a full script, but can include dialogue, if needed, narative text is simple and descriptive, characters and background are described in detail. Choosen style is maintained. No extra keys, no code blocks. Always follow Additional requirements and ensure correctness.
+      Each frame differs in emotion, action, camera. Narration suits the scene, dialogue, or action, and is a short line, not a full script, but can include dialogue, if needed, narative text is simple and descriptive of the scene write character names if dialogue is included., characters and background are described in detail. Choosen style is maintained. No extra keys, no code blocks. Always follow Additional requirements and ensure correctness. Return exactly: { "emotion": "emotion", "characters": "characters", "location": "location", "camera": "camera", "action": "action", "prompt": "prompt", "narration": "narration" }
+      make sure to fix all issues if images proportions are incorrect, or if the image is low quality, blurry, disfigured, extra limbs, watermark, text overlay, ugly, incorrect perspective, disproportionate.
       `;
 
       return await callOpenAIAPI(promptForAPI);
@@ -273,11 +274,12 @@
       - "characters": string
       - "location": string
       - "camera": string
-      - "action": string
+      - "action": stringa
       - "prompt": string
       - "narration": string
 
-      Each frame differs in emotion, action, camera. Narration suits the scene, dialogue, or action, and is a short line, not a full script, but can include dialogue, if needed, narative text is simple and descriptive, characters and background are described in detail. Choosen style is maintained. No extra keys, no code blocks. Always follow Additional requirements and ensure correctness.
+      Each frame differs in emotion, action, camera. Narration suits the scene, dialogue, or action, and is a short line, not a full script, but can include dialogue, if needed, narative text is simple and descriptive of the scene write character names if dialogue is included., characters and background are described in detail. Choosen style is maintained. No extra keys, no code blocks. Always follow Additional requirements and ensure correctness. Return exactly: { "emotion": "emotion", "characters": "characters", "location": "location", "camera": "camera", "action": "action", "prompt": "prompt", "narration": "narration" }
+      make sure to fix all issues if images proportions are incorrect, or if the image is low quality, blurry, disfigured, extra limbs, watermark, text overlay, ugly, incorrect perspective, disproportionate.
       `;
 
       return await callOpenAIAPI(promptForAPI);
