@@ -173,7 +173,6 @@
         const data=await response.json();
         if(data.choices && data.choices.length>0 && data.choices[0].message) {
           let content = data.choices[0].message.content.trim();
-          // Pašaliname bet kokius ``` jei būtų
           content = content.replace(/```/g,'').trim();
           try {
             const obj = JSON.parse(content);
@@ -202,9 +201,9 @@
       const locValue = document.getElementById(`location-${frameNumber}`)?.value.trim() || "";
       const framePlot = storyOutline[frameNumber - 1] || "This frame continues the story logically.";
 
-      // Papildomai pridėsime lauką "narration", kuris apibūdins kas vyksta scenoje (sakinys, dialogas)
-      // Dabar laukai: emotion, characters, location, camera, action, prompt, narration
-
+      // Negative prompt instrukcijos:
+      // Reikalaujama išlaikyti gerą perspektyvą, kompoziciją, proporcijas.
+      // Neigiamas promptas: "low quality, blurry, disfigured, extra limbs, watermark, text overlay, ugly, incorrect perspective, disproportionate"
       const promptForAPI = `
       You are a helpful AI assistant. Return strictly valid JSON with EXACT keys: "emotion","characters","location","camera","action","prompt","narration".
       No extra keys, no code blocks.
@@ -213,17 +212,65 @@
       Frame ${frameNumber} outline: "${framePlot}"
       Style: "${style}"
 
-      Requirements:
-      - "emotion": string describing emotion of scene
-      - "characters": string describing characters exactly as global, plus any changes allowed by outline
-      - "location": string describing location exactly as global, plus any changes allowed by outline
-      - "camera": string describing a distinct camera shot/angle. Must differ from previous frames if possible.
-      - "action": string describing action in this frame
-      - "prompt": a single string integrating style, characters, location details, emotion, camera plan, and action into one cohesive visual description (for image generation).
-      - "narration": a short sentence or dialog line describing what is happening in the scene, like a narrative caption or character dialogue.
+      Additional requirements:
+      - Maintain correct perspective, composition, and proportions in the scene.
+      - Negative prompt (things that must NOT appear): "low quality, blurry, disfigured, extra limbs, watermark, text overlay, ugly, incorrect perspective, disproportionate".
+      - The image should be high-quality, with proper perspective and proportion.
 
-      Each frame differs from previous frames in emotion, action, camera, but keeps the same style and the same character/location details (unless changed by outline).
-      "narration" should reflect the moment's situation or a snippet of dialogue, ensuring the text is nicely fitting the scene.
+      Requirements:
+      - "emotion": string
+      - "characters": string 
+      - "location": string
+      - "camera": string
+      - "action": string
+      - "prompt": string (include style, ensure correct composition, no negative elements)
+      - "narration": string (short line describing the scene or dialogue)
+      
+      Each frame differs in emotion, action, camera. Narration fits the scene.
+      `;
+
+      return await callOpenAIAPI(promptForAPI);
+    }
+
+    async function generateFrameWithNarration(frameNumber) {
+      // Ši funkcija analogiška generateAutoFrameDetails, bet skambiname ją iš autoGenerateFrameDetailsForAll
+      // arba galite generuoti tiesiogiai iš čia. Tai vienoda logika, galima sujungti, bet paliekame taip pat aiškumo sumetimais.
+      const scenario = document.getElementById('scenarioInput').value.trim();
+      const style = document.getElementById('styleSelection').value;
+      if(!scenario) return null;
+
+      const emotion = document.getElementById(`emotion-${frameNumber}`)?.value.trim() || "neutral";
+      const cameraValue = document.getElementById(`camera-${frameNumber}`)?.value || "";
+      const charsValue = document.getElementById(`characters-${frameNumber}`)?.value.trim() || "";
+      const locValue = document.getElementById(`location-${frameNumber}`)?.value.trim() || "";
+      const framePlot = storyOutline[frameNumber - 1] || "This frame continues the story logically.";
+
+      // Tokia pati logika kaip generateAutoFrameDetails, nes mes jau integravome narration ir negative prompt instructions ten
+      // Naudosime tą patį promptą
+      const promptForAPI = `
+      You are a helpful AI assistant. Return strictly valid JSON with EXACT keys: "emotion","characters","location","camera","action","prompt","narration".
+      No extra keys, no code blocks.
+      Scenario: "${scenario}"
+      Global: Characters="${globalCharacters}", Location="${globalLocation}"
+      Frame ${frameNumber} outline: "${framePlot}"
+      Style: "${style}"
+
+      Additional requirements:
+      - Maintain correct perspective, composition, and proportions.
+      - Negative prompt: "low quality, blurry, disfigured, extra limbs, watermark, text overlay, ugly, incorrect perspective, disproportionate".
+      - The image should be high-quality and well-composed.
+
+      Requirements:
+      - "emotion": string
+      - "characters": string
+      - "location": string
+      - "camera": string
+      - "action": string
+      - "prompt": string (include style, ensure correct composition, no negatives)
+      - "narration": string (short line describing the scene or dialogue)
+      
+      Each frame differs from previous frames in emotion, action, camera.
+      Narration should reflect what's happening or be a line of dialogue.
       `;
 
       return await callOpenAIAPI(promptForAPI);
@@ -286,12 +333,10 @@
           <label>Sugeneruotas Vaizdas:</label>
           <img id="image-${currentFrameCount}" src="#" alt="Sugeneruotas vaizdas" style="display:none;cursor:pointer;" onclick="openModal(${currentFrameCount})" />
         </div>
-        <!-- Čia rodysime trumpą sakinio/naracijos lauką -->
         <div class="input-group narration-group" style="margin-top:10px; display:none;">
           <label>Naracija:</label>
           <div class="narration-text" id="narration-${currentFrameCount}" style="font-style:italic;"></div>
         </div>
-
         <input type="hidden" id="prompt-${currentFrameCount}" />
       `;
       framesContainer.appendChild(frame);
@@ -324,7 +369,6 @@
       }
       document.getElementById(`prompt-${n}`).value=finalPrompt;
 
-      // Parodyti naraciją
       const narrationDiv = document.getElementById(`narration-${n}`);
       narrationDiv.textContent = details.narration;
       narrationDiv.parentElement.style.display = 'block';
@@ -360,42 +404,6 @@
           console.error(`Nepavyko gauti duomenų rėmeliui ${i}.`);
         }
       }
-    }
-
-    async function generateFrameWithNarration(frameNumber) {
-      // panašiai kaip generateAutoFrameDetails, bet su narration
-      const scenario = document.getElementById('scenarioInput').value.trim();
-      const style = document.getElementById('styleSelection').value;
-      if(!scenario) return null;
-
-      const emotion = document.getElementById(`emotion-${frameNumber}`)?.value.trim() || "neutral";
-      const cameraValue = document.getElementById(`camera-${frameNumber}`)?.value || "";
-      const charsValue = document.getElementById(`characters-${frameNumber}`)?.value.trim() || "";
-      const locValue = document.getElementById(`location-${frameNumber}`)?.value.trim() || "";
-      const framePlot = storyOutline[frameNumber - 1] || "This frame continues the story logically.";
-
-      const promptForAPI = `
-      You are a helpful AI assistant. Return strictly valid JSON with EXACT keys: "emotion","characters","location","camera","action","prompt","narration".
-      No extra keys, no code blocks.
-      Scenario: "${scenario}"
-      Global: Characters="${globalCharacters}", Location="${globalLocation}"
-      Frame ${frameNumber} outline: "${framePlot}"
-      Style: "${style}"
-
-      Requirements:
-      - "emotion": string
-      - "characters": string (characters as global, plus allowed changes)
-      - "location": string (location as global, plus allowed changes)
-      - "camera": string (distinct camera shot/angle)
-      - "action": string (action in this frame)
-      - "prompt": single string integrating style, chars, loc, emotion, camera, action
-      - "narration": a short sentence or line of dialogue describing what's happening right now in the scene, nicely fitting the scene.
-
-      Each frame differs from previous frames in emotion, action, camera.
-      Narration should provide a brief insight: maybe a character says something or a short descriptive line of what's happening.
-      `;
-
-      return await callOpenAIAPI(promptForAPI);
     }
 
     function removeFrame(num) {
@@ -445,32 +453,45 @@
       updateProgressBar(0);
       const model = document.getElementById('modelSelection').value;
 
-      try {
-        for (let i = 1; i <= currentFrameCount; i++) {
-          const prompt = document.getElementById(`prompt-${i}`).value.trim();
-          const aspect = document.getElementById(`aspectRatio-${i}`).value;
-          let w, h;
-          switch(aspect) {
-            case '16:9': w=1920;h=1080;break;
-            case '4:3': w=1600;h=1200;break;
-            case '9:16': w=1080;h=1920;break;
-            case '1:1': w=1080;h=1080;break;
-            default: w=1024;h=1024;
-          }
-          const imgEl = document.getElementById(`image-${i}`);
-          if (imgEl.src && imgEl.src !== '#' && imgEl.style.display === 'block') continue; 
-          const imgUrl = await fetchImage(prompt, model, w, h);
-          imgEl.src = imgUrl;
-          imgEl.style.display = 'block';
-          updateProgressBar((i/currentFrameCount)*100);
+      for (let i = 1; i <= currentFrameCount; i++) {
+        const prompt = document.getElementById(`prompt-${i}`).value.trim();
+        const aspect = document.getElementById(`aspectRatio-${i}`).value;
+        let w, h;
+        switch(aspect) {
+          case '16:9': w=1920;h=1080;break;
+          case '4:3': w=1600;h=1200;break;
+          case '9:16': w=1080;h=1920;break;
+          case '1:1': w=1080;h=1080;break;
+          default: w=1024;h=1024;
         }
-        alert('Storyboard sugeneruotas!');
-      } catch(e) {
-        console.error(e);
-        alert('Klaida generuojant storyboard. Patikrinkite konsolę arba bandykite dar kartą.');
-      } finally {
-        document.getElementById('overlay').style.display = 'none';
+        const imgEl = document.getElementById(`image-${i}`);
+        if (imgEl.src && imgEl.src !== '#' && imgEl.style.display === 'block') {
+          updateProgressBar((i/currentFrameCount)*100);
+          continue; 
+        }
+
+        let success = false;
+        let attempts = 0;
+        const maxAttempts = 3;
+        while(!success && attempts < maxAttempts) {
+          try {
+            const imgUrl = await fetchImage(prompt, model, w, h);
+            imgEl.src = imgUrl;
+            imgEl.style.display = 'block';
+            success = true;
+          } catch(e) {
+            attempts++;
+            console.error(`Bandymas ${attempts}: Nepavyko gauti vaizdo rėmeliui ${i}`, e);
+            if(attempts >= maxAttempts) {
+              alert(`Nepavyko gauti vaizdo rėmeliui ${i} net po ${maxAttempts} bandymų.`);
+            }
+          }
+        }
+        updateProgressBar((i/currentFrameCount)*100);
       }
+
+      alert('Storyboard sugeneruotas!');
+      document.getElementById('overlay').style.display = 'none';
     }
 
     async function fetchImage(prompt,model,w,h) {
