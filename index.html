@@ -34,6 +34,13 @@
           <span class="tooltiptext">Peržiūrėti sugeneruotus vaizdus</span>
         </button>
       </div>
+      <!-- Storyboard Button -->
+      <div class="input-group">
+        <button class="storyboard-button tooltip" onclick="navigateToStoryboard()" aria-label="Atidaryti storyboard puslapį">
+          <i class="fas fa-film"></i> Storyboard
+          <span class="tooltiptext">Atidaryti storyboard generatorių</span>
+        </button>
+      </div>
       <!-- Chat Interface -->
       <h2>Hexacola Chat GPT</h2>
       <div class="chat" id="chat" role="log" aria-live="polite">
@@ -59,7 +66,7 @@
       </div>
       <div class="input-group">
         <label for="characterPrompt">Personažo aprašymas:</label>
-        <textarea id="characterPrompt" placeholder="Pvz., Jaunas riteris su angelo sparnais..." aria-label="Personažo aprašymas"></textarea>
+        <textarea id="characterPrompt" placeholder="Pvz., Jaunas riteris su angelo sparnais..." aria-label="Personažo aprašymas" rows="2"></textarea>
         <button type="button" id="addCharacterBtn" onclick="addCharacterDescription()" title="Pridėti papildomą personažo aprašymą" aria-label="Pridėti papildomą personažo aprašymą">+</button>
       </div>
       <div id="additionalCharacterDescriptions">
@@ -223,5 +230,15 @@
 
   <!-- External JavaScript -->
   <script src="app.js"></script>
+  
+  <!-- JavaScript Function to Navigate to Storyboard -->
+  <script>
+    /**
+     * Navigate to the Storyboard Page
+     */
+    function navigateToStoryboard() {
+      window.location.href = 'storyboard.html';
+    }
+  </script>
 </body>
 </html>
