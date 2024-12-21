@@ -206,45 +206,68 @@
     }
 
     async function generateAutoFrameDetails(frameNumber) {
-      const scenario = document.getElementById('scenarioInput').value.trim();
-      const style = document.getElementById('styleSelection').value;
-      if(!scenario) return null;
+  const scenario = document.getElementById('scenarioInput').value.trim();
+  const style = document.getElementById('styleSelection').value;
+  if (!scenario) return null;
 
-      const emotion = document.getElementById(`emotion-${frameNumber}`)?.value.trim() || "neutral";
-      const cameraValue = document.getElementById(`camera-${frameNumber}`)?.value || "";
-      const charsValue = document.getElementById(`characters-${frameNumber}`)?.value.trim() || "";
-      const locValue = document.getElementById(`location-${frameNumber}`)?.value.trim() || "";
-      const framePlot = storyOutline[frameNumber - 1] || "This frame continues the story logically.";
+  const framePlot = storyOutline[frameNumber - 1] || "This frame continues the story logically.";
 
-      const promptForAPI = `
-      You are a helpful AI assistant storyboard image creator. Return strictly valid JSON with EXACT keys: "emotion","characters","location","camera","action","prompt","narration".
-      No extra keys, no code blocks.
-      Scenario: "${scenario}"
-      Global: Characters="${globalCharacters}", Location="${globalLocation}"
-      Frame ${frameNumber} outline: "${framePlot}"
-      Style: "${style}"
+  const promptForAPI = `
+  You are a helpful AI assistant storyboard image creator. Return strictly valid JSON with EXACT keys: "emotion","characters","location","camera","action","prompt","narration".
+  No extra keys, no code blocks.
+  Scenario: "${scenario}"
+  Global: Characters="${globalCharacters}", Location="${globalLocation}"
+  Frame ${frameNumber} outline: "${framePlot}"
+  Style: "${style}"
 
-      Additional requirements:
-      - Maintain correct perspective, composition, and proportions.
-      - Negative prompt: "low quality, blurry, disfigured, extra limbs, watermark, text overlay, ugly, incorrect perspective, disproportionate".
-      - The image should be high-quality, stylized as chosen, with correct proportions and no negative elements.
+  Additional requirements:
+  - Maintain correct perspective, composition, and proportions.
+  - Negative prompt: "low quality, blurry, disfigured, extra limbs, watermark, text overlay, ugly, incorrect perspective, disproportionate".
+  - High-quality image in chosen style.
 
-      Requirements:
-      - "emotion": string
-      - "characters": string 
-      - "location": string
-      - "camera": string
-      - "action": string
-      - "prompt": string (include style and ensure correctness)
-      - "narration": string (short line describing scene or dialogue)
+  Requirements:
+  - "emotion": string
+  - "characters": string
+  - "location": string
+  - "camera": string
+  - "action": string
+  - "prompt": string
+  - "narration": string
 
-      Each frame differs in emotion, action, camera. Narration suits the scene, dialogue, or action, and is a short line, not a full script, but can include dialogue, if needed, narative text is simple and descriptive of the scene write character names if dialogue is included Use straightforward and clear language. Keep each scene concise, focusing on direct actions and descriptions. Avoid poetic or overly complex expressions. Characters and background are described in detail. Choosen style is maintained. No extra keys, no code blocks. Always follow Additional requirements and ensure correctness. Return exactly: { "emotion": "emotion", "characters": "characters", "location": "location", "camera": "camera", "action": "action", "prompt": "prompt", "narration": "narration" }
-      Fix all issues if images proportions are incorrect, or if the image is low quality, blurry, disfigured, extra limbs, watermark, text overlay, ugly, incorrect perspective, disproportionate.
-      `;
+  Each frame differs in emotion, action, camera. Narration suits the scene, dialogue, or action, and is a short line, not a full script, but can include dialogue, if needed, narative text is simple and descriptive of the scene write character names if dialogue is included Use straightforward and clear language. Keep each scene concise, focusing on direct actions and descriptions. Avoid poetic or overly complex expressions. Characters and background are described in detail. Choosen style is maintained. No extra keys, no code blocks. Always follow Additional requirements and ensure correctness. Return exactly: { "emotion": "emotion", "characters": "characters", "location": "location", "camera": "camera", "action": "action", "prompt": "prompt", "narration": "narration" }
+  Fix all issues if images proportions are incorrect, or if the image is low quality, blurry, disfigured, extra limbs, watermark, text overlay, ugly, incorrect perspective, disproportionate.
+  `;
 
-      return await callOpenAIAPI(promptForAPI);
-    }
+  const response = await callOpenAIAPI(promptForAPI);
+  if (!response) return null;
 
+  // Ensure all fields are provided
+  response.emotion = response.emotion || "neutral";
+  response.characters = response.characters || "";
+  response.location = response.location || "";
+  response.camera = response.camera || getRandomCameraOption();
+  response.action = response.action || "unknown";
+  response.prompt = response.prompt || "";
+  response.narration = response.narration || "";
+
+  return response;
+}
+
+function getRandomCameraOption() {
+  const cameraOptions = [
+    "Wide Shot",
+    "Close-Up",
+    "Extreme Close-Up",
+    "Dolly Shot",
+    "Point of View",
+    "Tilt",
+    "Panorama",
+    "Drone Shot",
+    "Focus Pull",
+    "Tracking Shot"
+  ];
+  return cameraOptions[Math.floor(Math.random() * cameraOptions.length)];
+}
     async function generateFrameWithNarration(frameNumber) {
       const scenario = document.getElementById('scenarioInput').value.trim();
       const style = document.getElementById('styleSelection').value;
@@ -354,70 +377,64 @@
       framesContainer.appendChild(frame);
     }
 
-    function fillFrameWithDetails(n, details){
-      if(!details) return;
-      const requiredKeys = ["emotion","characters","location","camera","action","prompt","narration"];
-      for(const k of requiredKeys) {
-        if(!details.hasOwnProperty(k) || typeof details[k]!=='string') {
-          console.error(`Nepilni duomenys rėmeliui ${n}`, details);
-          return;
-        }
-      }
-
-      document.getElementById(`emotion-${n}`).value = details.emotion;
-      document.getElementById(`characters-${n}`).value = details.characters;
-      document.getElementById(`location-${n}`).value = details.location;
-      const camSelect=document.getElementById(`camera-${n}`);
-      for(const opt of camSelect.options){
-        if(opt.value===details.camera){
-          camSelect.value=details.camera;
-          break;
-        }
-      }
-
-      let finalPrompt = details.prompt;
-      if(details.action !== 'unknown' && details.action.trim()!==''){
-        finalPrompt += " [Action: " + details.action + "]";
-      }
-      document.getElementById(`prompt-${n}`).value=finalPrompt;
-
-      const narrationDiv = document.getElementById(`narration-${n}`);
-      narrationDiv.textContent = details.narration;
-      narrationDiv.parentElement.style.display = 'block';
+    function fillFrameWithDetails(n, details) {
+  if (!details) return;
+  const requiredKeys = ["emotion", "characters", "location", "camera", "action", "prompt", "narration"];
+  for (const k of requiredKeys) {
+    if (!details.hasOwnProperty(k) || typeof details[k] !== 'string') {
+      console.error(`Nepilni duomenys rėmeliui ${n}`, details);
+      return;
     }
+  }
 
-    async function autoGenerateFrameDetailsForAll() {
-      const scenario = document.getElementById('scenarioInput').value.trim();
-      const style = document.getElementById('styleSelection').value;
-      if(!scenario) return; 
+  document.getElementById(`emotion-${n}`).value = details.emotion;
+  document.getElementById(`characters-${n}`).value = details.characters;
+  document.getElementById(`location-${n}`).value = details.location;
 
-      const globalData = await generateGlobalDetails(scenario, style);
-      if(!globalData || !globalData.globalCharacters || !globalData.globalLocation) {
-        console.error("Nepavyko gauti globalių duomenų. Pabandykite kitą scenarijų.");
-        return;
-      }
-      
-      globalCharacters = globalData.globalCharacters;
-      globalLocation = globalData.globalLocation;
+  const camSelect = document.getElementById(`camera-${n}`);
+  camSelect.value = details.camera; // Atnaujinti kameros planą
 
-      const outlineData = await generateStoryOutline(scenario, currentFrameCount);
-      if(!outlineData || !outlineData.outline) {
-        console.error("Nepavyko gauti istorijos plano. Bandykite kitą scenarijų.");
-        return;
-      }
-      
-      storyOutline = outlineData.outline;
+  let finalPrompt = details.prompt;
+  if (details.action !== 'unknown' && details.action.trim() !== '') {
+    finalPrompt += " [Action: " + details.action + "]";
+  }
+  document.getElementById(`prompt-${n}`).value = finalPrompt;
 
-      for (let i=1; i<=currentFrameCount; i++){
-        const details = await generateFrameWithNarration(i);
-        if(details){
-          fillFrameWithDetails(i, details);
-        } else {
-          console.error(`Nepavyko gauti duomenų rėmeliui ${i}.`);
-        }
-      }
+  const narrationDiv = document.getElementById(`narration-${n}`);
+  narrationDiv.textContent = details.narration;
+  narrationDiv.parentElement.style.display = 'block';
+}
+async function autoGenerateFrameDetailsForAll() {
+  const scenario = document.getElementById('scenarioInput').value.trim();
+  const style = document.getElementById('styleSelection').value;
+  if (!scenario) return; 
+
+  const globalData = await generateGlobalDetails(scenario, style);
+  if (!globalData || !globalData.globalCharacters || !globalData.globalLocation) {
+    console.error("Nepavyko gauti globalių duomenų. Pabandykite kitą scenarijų.");
+    return;
+  }
+  
+  globalCharacters = globalData.globalCharacters;
+  globalLocation = globalData.globalLocation;
+
+  const outlineData = await generateStoryOutline(scenario, currentFrameCount);
+  if (!outlineData || !outlineData.outline) {
+    console.error("Nepavyko gauti istorijos plano. Bandykite kitą scenarijų.");
+    return;
+  }
+  
+  storyOutline = outlineData.outline;
+
+  for (let i = 1; i <= currentFrameCount; i++) {
+    const details = await generateAutoFrameDetails(i);
+    if (details) {
+      fillFrameWithDetails(i, details);
+    } else {
+      console.error(`Nepavyko gauti duomenų rėmeliui ${i}.`);
     }
-
+  }
+}
     function removeFrame(num) {
       const frame = document.getElementById(`frame-${num}`);
       if (frame) {
@@ -441,138 +458,143 @@
     }
 
     async function generateStoryboard() {
-      const scenario = document.getElementById('scenarioInput').value.trim();
-      if (!scenario) {
-        alert('Įveskite scenarijų.');
-        return;
-      }
-      if (currentFrameCount === 0) {
-        alert('Pridėkite bent vieną rėmelį.');
-        return;
-      }
+  const scenario = document.getElementById('scenarioInput').value.trim();
+  if (!scenario) {
+    alert('Įveskite scenarijų.');
+    return;
+  }
+  if (currentFrameCount === 0) {
+    alert('Pridėkite bent vieną rėmelį.');
+    return;
+  }
 
-      if(autoPromptEnabled && scenario!==''){
-        await autoGenerateFrameDetailsForAll();
-      }
+  // Generate frame details for all frames
+  for (let i = 1; i <= currentFrameCount; i++) {
+    const details = await generateFrameWithNarration(i);
+    if (details) {
+      fillFrameWithDetails(i, details);
+    } else {
+      console.error(`Nepavyko gauti duomenų rėmeliui ${i}.`);
+    }
+  }
 
-      for (let i=1;i<=currentFrameCount;i++){
-        const prompt=document.getElementById(`prompt-${i}`).value.trim();
-        if(!prompt){
-          alert(`Nepavyko sugeneruoti prompt rėmeliui ${i}. Įjunkite AUTO ON ir pateikite scenarijų, arba suveskite rankiniu būdu.`);
-          return;
-        }
-      }
+  for (let i = 1; i <= currentFrameCount; i++) {
+    const prompt = document.getElementById(`prompt-${i}`).value.trim();
+    if (!prompt) {
+      alert(`Nepavyko sugeneruoti prompt rėmeliui ${i}. Įjunkite AUTO ON ir pateikite scenarijų, arba suveskite rankiniu būdu.`);
+      return;
+    }
+  }
 
-      document.getElementById('overlay').style.display = 'flex';
-      updateProgressBar(0);
-      const model = document.getElementById('modelSelection').value;
+  document.getElementById('overlay').style.display = 'flex';
+  updateProgressBar(0);
+  const model = document.getElementById('modelSelection').value;
 
-      for (let i = 1; i <= currentFrameCount; i++) {
-        const prompt = document.getElementById(`prompt-${i}`).value.trim();
-        const aspect = document.getElementById(`aspectRatio-${i}`).value;
-        let w, h;
-        switch(aspect) {
-          case '16:9': w=1920;h=1080;break;
-          case '4:3': w=1600;h=1200;break;
-          case '9:16': w=1080;h=1920;break;
-          case '1:1': w=1080;h=1080;break;
-          default: w=1024;h=1024;
-        }
-        const imgEl = document.getElementById(`image-${i}`);
-        if (imgEl.src && imgEl.src !== '#' && imgEl.style.display === 'block') {
-          updateProgressBar((i/currentFrameCount)*100);
-          continue; 
-        }
-
-        let success = false;
-        let attempts = 0;
-        const maxAttempts = 5;
-        while(!success && attempts < maxAttempts) {
-          try {
-            const imgUrl = await fetchImage(prompt, model, w, h);
-            imgEl.src = imgUrl;
-            imgEl.style.display = 'block';
-            success = true;
-          } catch(e) {
-            attempts++;
-            console.error(`Bandymas ${attempts}: Nepavyko gauti vaizdo rėmeliui ${i}`, e);
-            if(attempts >= maxAttempts) {
-              alert(`Nepavyko gauti vaizdo rėmeliui ${i} net po ${maxAttempts} bandymų.`);
-            }
-          }
-        }
-        updateProgressBar((i/currentFrameCount)*100);
-      }
-
-      alert('Storyboard sugeneruotas!');
-      document.getElementById('overlay').style.display = 'none';
+  for (let i = 1; i <= currentFrameCount; i++) {
+    const prompt = document.getElementById(`prompt-${i}`).value.trim();
+    const aspect = document.getElementById(`aspectRatio-${i}`).value;
+    let w, h;
+    switch (aspect) {
+      case '16:9': w = 1920; h = 1080; break;
+      case '4:3': w = 1600; h = 1200; break;
+      case '9:16': w = 1080; h = 1920; break;
+      case '1:1': w = 1080; h = 1080; break;
+      default: w = 1024; h = 1024;
+    }
+    const imgEl = document.getElementById(`image-${i}`);
+    if (imgEl.src && imgEl.src !== '#' && imgEl.style.display === 'block') {
+      updateProgressBar((i / currentFrameCount) * 100);
+      continue;
     }
 
-    async function regenerateFrame(n) {
-      // Pergeneruoja tik vieną konkretų rėmelį
-      const scenario = document.getElementById('scenarioInput').value.trim();
-      if(!scenario) {
-        alert('Įveskite scenarijų prieš pergeneruojant rėmelį.');
-        return;
-      }
-
-      // Jei autoPromptEnabled yra true ir turime scenarijų, bandysime vėl gauti duomenis rėmeliui n
-      if(autoPromptEnabled && scenario!==''){
-        const details = await generateFrameWithNarration(n);
-        if(details){
-          fillFrameWithDetails(n, details);
-        } else {
-          console.error(`Nepavyko pergeneruoti duomenų rėmeliui ${n}.`);
-          return;
+    let success = false;
+    let attempts = 0;
+    const maxAttempts = 5;
+    while (!success && attempts < maxAttempts) {
+      try {
+        const imgUrl = await fetchImage(prompt, model, w, h);
+        imgEl.src = imgUrl;
+        imgEl.style.display = 'block';
+        success = true;
+      } catch (e) {
+        attempts++;
+        console.error(`Bandymas ${attempts}: Nepavyko gauti vaizdo rėmeliui ${i}`, e);
+        if (attempts >= maxAttempts) {
+          alert(`Nepavyko gauti vaizdo rėmeliui ${i} net po ${maxAttempts} bandymų.`);
         }
-      }
-
-      // Dabar turime prompt, bandome gauti vaizdą
-      const prompt=document.getElementById(`prompt-${n}`).value.trim();
-      if(!prompt){
-        alert(`Nepavyko gauti prompt rėmeliui ${n}, bandykite įjungti AUTO ON arba suvesti rankiniu būdu.`);
-        return;
-      }
-
-      const model = document.getElementById('modelSelection').value;
-      const aspect = document.getElementById(`aspectRatio-${n}`).value;
-      let w, h;
-      switch(aspect) {
-        case '16:9': w=1920;h=1080;break;
-        case '4:3': w=1600;h=1200;break;
-        case '9:16': w=1080;h=1920;break;
-        case '1:1': w=1080;h=1080;break;
-        default: w=1024;h=1024;
-      }
-
-      const imgEl = document.getElementById(`image-${n}`);
-      imgEl.style.display='none'; // paslėpti seną vaizdą, jei buvo
-      document.getElementById('overlay').style.display = 'flex';
-      updateProgressBar(0);
-
-      let success = false;
-      let attempts = 0;
-      const maxAttempts = 5;
-      while(!success && attempts < maxAttempts) {
-        try {
-          const imgUrl = await fetchImage(prompt, model, w, h);
-          imgEl.src = imgUrl;
-          imgEl.style.display = 'block';
-          success = true;
-        } catch(e) {
-          attempts++;
-          console.error(`Bandymas ${attempts}: Nepavyko pergeneruoti vaizdo rėmeliui ${n}`, e);
-          if(attempts >= maxAttempts) {
-            alert(`Nepavyko pergeneruoti vaizdo rėmeliui ${n} net po ${maxAttempts} bandymų.`);
-          }
-        }
-      }
-
-      document.getElementById('overlay').style.display = 'none';
-      if(success){
-        alert(`Rėmelis ${n} sėkmingai pergeneruotas!`);
       }
     }
+    updateProgressBar((i / currentFrameCount) * 100);
+  }
+
+  alert('Storyboard sugeneruotas!');
+  document.getElementById('overlay').style.display = 'none';
+}
+async function regenerateFrame(n) {
+  // Pergeneruoja tik vieną konkretų rėmelį
+  const scenario = document.getElementById('scenarioInput').value.trim();
+  if (!scenario) {
+    alert('Įveskite scenarijų prieš pergeneruojant rėmelį.');
+    return;
+  }
+
+  // Jei autoPromptEnabled yra true ir turime scenarijų, bandysime vėl gauti duomenis rėmeliui n
+  if (autoPromptEnabled && scenario !== '') {
+    const details = await generateFrameWithNarration(n);
+    if (details) {
+      fillFrameWithDetails(n, details);
+    } else {
+      console.error(`Nepavyko pergeneruoti duomenų rėmeliui ${n}.`);
+      return;
+    }
+  }
+
+  // Dabar turime prompt, bandome gauti vaizdą
+  const prompt = document.getElementById(`prompt-${n}`).value.trim();
+  if (!prompt) {
+    alert(`Nepavyko gauti prompt rėmeliui ${n}, bandykite įjungti AUTO ON arba suvesti rankiniu būdu.`);
+    return;
+  }
+
+  const model = document.getElementById('modelSelection').value;
+  const aspect = document.getElementById(`aspectRatio-${n}`).value;
+  let w, h;
+  switch (aspect) {
+    case '16:9': w = 1920; h = 1080; break;
+    case '4:3': w = 1600; h = 1200; break;
+    case '9:16': w = 1080; h = 1920; break;
+    case '1:1': w = 1080; h = 1080; break;
+    default: w = 1024; h = 1024;
+  }
+
+  const imgEl = document.getElementById(`image-${n}`);
+  imgEl.style.display = 'none'; // paslėpti seną vaizdą, jei buvo
+  document.getElementById('overlay').style.display = 'flex';
+  updateProgressBar(0);
+
+  let success = false;
+  let attempts = 0;
+  const maxAttempts = 5;
+  while (!success && attempts < maxAttempts) {
+    try {
+      const imgUrl = await fetchImage(prompt, model, w, h);
+      imgEl.src = imgUrl;
+      imgEl.style.display = 'block';
+      success = true;
+    } catch (e) {
+      attempts++;
+      console.error(`Bandymas ${attempts}: Nepavyko pergeneruoti vaizdo rėmeliui ${n}`, e);
+      if (attempts >= maxAttempts) {
+        alert(`Nepavyko pergeneruoti vaizdo rėmeliui ${n} net po ${maxAttempts} bandymų.`);
+      }
+    }
+  }
+
+  document.getElementById('overlay').style.display = 'none';
+  if (success) {
+    alert(`Rėmelis ${n} sėkmingai pergeneruotas!`);
+  }
+}
 
     async function fetchImage(prompt,model,w,h) {
       const enc = encodeURIComponent(prompt);
